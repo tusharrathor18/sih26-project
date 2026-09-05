@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 
 from users.models import OfficerProfile
 
-from .models import Inspection, InspectionImage
+from .models import AuditLog, FieldCorrection, Inspection, InspectionImage
 from .services.extraction_service import extract_fields
 from .services.image_processing import process_image
 
@@ -94,3 +94,22 @@ class ExtractionServiceTests(TestCase):
         self.assertEqual(values["country_of_origin"], "India")
         self.assertEqual(metadata["mrp"]["status"], "DETECTED")
         self.assertNotIn("compliant", values)
+
+
+class VerificationAuditTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="verify_user", password="TestPassword@123")
+        OfficerProfile.objects.create(user=self.user, officer_id="OFF-VERIFY-001", name="Verifier", designation="Inspector", jurisdiction="Zone 1", role="INSPECTOR")
+        self.inspection = Inspection.objects.create(officer=self.user, status=Inspection.Status.AWAITING_VERIFICATION)
+        from scanner.models import ExtractedProductData
+        ExtractedProductData.objects.create(inspection=self.inspection, values={"mrp": "199"}, original_values={"mrp": "199"})
+        self.client.force_authenticate(self.user)
+
+    def test_correction_preserves_original_and_records_audit(self):
+        response = self.client.patch(f"/api/scanner/inspections/{self.inspection.inspection_id}/verify/", {"values": {"mrp": "₹199"}}, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(FieldCorrection.objects.get(inspection=self.inspection).original_value, "199")
+        self.assertEqual(self.inspection.extracted_data.original_values["mrp"], "199")
+        self.assertTrue(AuditLog.objects.filter(inspection=self.inspection, action="FIELD_CORRECTED").exists())
+        self.assertTrue(AuditLog.objects.filter(inspection=self.inspection, action="INSPECTION_VERIFIED").exists())

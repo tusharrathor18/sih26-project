@@ -255,6 +255,34 @@ python manage.py test scanner.tests users.tests
 - [x] **Prompt 2/15:** React-Django API integration, officer authentication, protected routes, logout & authorization foundation.
 - [x] **Prompt 3/15:** Multi-image inspection ingestion, preprocessing, OCR storage, structured extraction & officer verification.
 - [x] **Prompt 4/15:** PDF-sourced Legal Metrology applicability, rule evaluation, schedules, evidence and manual-review results.
+- [x] **Prompt 5/15:** Officer verification, correction history, compliance result views, inspection history, dashboard statistics and audit trail.
+
+## 10. Prompt 5 Verification and Audit Workflow
+
+Prompt 5 adds append-only field corrections and inspection audit events. Corrections preserve
+the original extracted value, corrected value, officer, and timestamp. Changing verified data
+invalidates the current compliance evaluation; running the check again creates a new version
+and preserves the previous result.
+
+New scanner endpoints include:
+
+```text
+GET /api/scanner/inspections/history/?search=<text>&status=<status>&product=<text>
+GET /api/scanner/inspections/<inspection_id>/review/
+GET /api/scanner/inspections/<inspection_id>/audit/
+GET /api/scanner/dashboard/stats/
+```
+
+Compliance results are available through:
+
+```text
+GET /api/compliance/inspections/<inspection_id>/results/
+GET /api/compliance/inspections/<inspection_id>/compliance/
+```
+
+The frontend routes are `/inspection/<id>`, `/inspection/<id>/review`, and
+`/inspection/<id>/results`. History search is enforced by Django ownership-filtered
+querysets. Audit logs and corrections are read-only in Django Admin.
 
 ## 9. Prompt 4 Legal Metrology Compliance Engine
 

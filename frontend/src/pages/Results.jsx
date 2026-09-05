@@ -1,10 +1,21 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { FileCheck2, ArrowLeft, ShieldAlert } from 'lucide-react';
+import { FileCheck2, ArrowLeft } from 'lucide-react';
+import { complianceService } from '../services/complianceService';
+import { getApiErrorMessage } from '../services/api';
+import '../styles/scanner.css';
 
 const Results = () => {
   const navigate = useNavigate();
+  const { inspectionId } = useParams();
+  const [evaluation, setEvaluation] = useState(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!inspectionId) return;
+    complianceService.get(inspectionId).then(setEvaluation).catch((requestError) => setError(getApiErrorMessage(requestError, 'Unable to load compliance results.')));
+  }, [inspectionId]);
 
   return (
     <div className="portal-layout">
@@ -17,39 +28,20 @@ const Results = () => {
           </button>
         </div>
 
-        <div style={{
-          backgroundColor: '#1e293b',
-          border: '1px solid #334155',
-          borderRadius: '12px',
-          padding: '32px',
-        }}>
+        <div className="scanner-panel">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <FileCheck2 className="text-cyan" size={24} />
-            <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#f8fafc', margin: 0 }}>
+            <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1f2933', margin: 0 }}>
               Compliance Evaluation Reports
             </h1>
           </div>
 
-          <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '32px' }}>
-            Detailed rule-by-rule evaluation logs based on the Legal Metrology (Packaged Commodities) Rules, 2011.
+          <p style={{ color: '#5b6573', fontSize: '14px', marginBottom: '32px' }}>
+            Automated preliminary compliance assessment. Results must be verified by the authorized officer.
           </p>
-
-          <div style={{
-            padding: '48px 24px',
-            textAlign: 'center',
-            backgroundColor: '#0f172a',
-            borderRadius: '8px',
-            border: '1px dashed #334155'
-          }}>
-            <ShieldAlert size={36} color="#fbbf24" style={{ margin: '0 auto 12px' }} />
-            <h3 style={{ color: '#f8fafc', fontSize: '16px', marginBottom: '6px' }}>Rule Engine Reporting Scaffolded</h3>
-            <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '500px', margin: '0 auto 20px' }}>
-              The Legal Metrology rule engine outputs (PASS, FAIL, WARNING, and statutory citations) will be rendered here upon completing inspection scans.
-            </p>
-            <button onClick={() => navigate('/dashboard')} className="btn-secondary">
-              Return to Dashboard
-            </button>
-          </div>
+          {error && <div className="scanner-alert">{error}</div>}
+          {!inspectionId && <div className="scanner-alert">Open an inspection from History to view its results.</div>}
+          {evaluation && <><div className="scanner-success"><strong>Overall status: {evaluation.overall_status}</strong><br />Passed {evaluation.passed} · Failed {evaluation.failed} · Manual review {evaluation.manual_review} · Not applicable {evaluation.not_applicable}</div>{evaluation.results.map((result) => <article key={result.id} className="scanner-result"><div><strong>{result.rule_reference.source_reference || `Rule ${result.rule_reference.rule_number}`}</strong><span className={`result-status result-${result.status.toLowerCase()}`}>{result.status.replaceAll('_', ' ')}</span></div><h3>{result.rule_reference.title}</h3><p>{result.explanation}</p>{result.detected_value && <p><strong>Detected:</strong> {result.detected_value}</p>}<p><strong>Requirement:</strong> {result.expected_requirement}</p>{result.recommendation && <p><strong>Recommendation:</strong> {result.recommendation}</p>}<small>Source PDF page {result.rule_reference.source_page || 'not recorded'}</small></article>)}</>}
         </div>
       </main>
     </div>

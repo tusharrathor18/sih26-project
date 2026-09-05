@@ -110,3 +110,31 @@ class ExtractedProductData(models.Model):
 	verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="verified_product_data")
 	verified_at = models.DateTimeField(null=True, blank=True)
 	updated_at = models.DateTimeField(auto_now=True)
+
+
+class FieldCorrection(models.Model):
+	inspection = models.ForeignKey(Inspection, on_delete=models.CASCADE, related_name="corrections")
+	field_name = models.CharField(max_length=100)
+	original_value = models.TextField(blank=True)
+	corrected_value = models.TextField(blank=True)
+	correction_reason = models.TextField(blank=True)
+	corrected_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="inspection_corrections")
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ["-created_at"]
+
+
+class AuditLog(models.Model):
+	inspection = models.ForeignKey(Inspection, on_delete=models.CASCADE, related_name="audit_logs")
+	user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="inspection_audit_logs")
+	action = models.CharField(max_length=50)
+	description = models.TextField()
+	metadata = models.JSONField(default=dict, blank=True)
+	previous_value = models.TextField(blank=True)
+	new_value = models.TextField(blank=True)
+	ip_address = models.GenericIPAddressField(null=True, blank=True)
+	timestamp = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ["timestamp"]

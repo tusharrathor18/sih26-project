@@ -48,3 +48,12 @@ class ComplianceEngineTests(TestCase):
         ExtractedProductData.objects.create(inspection=self.inspection, values={"net_quantity": "500", "quantity_unit": "ml"})
         evaluation, _ = save_evaluation(self.inspection)
         self.assertEqual(evaluation.results.get(rule__rule_number="6").status, "MANUAL_REVIEW")
+
+    def test_rerun_creates_new_current_evaluation_version(self):
+        ExtractedProductData.objects.create(inspection=self.inspection, values={"net_quantity": "500", "quantity_unit": "ml"})
+        first, _ = save_evaluation(self.inspection)
+        second, _ = save_evaluation(self.inspection)
+        self.assertEqual(first.evaluation_version, 1)
+        self.assertEqual(second.evaluation_version, 2)
+        self.assertFalse(first.is_current)
+        self.assertTrue(second.is_current)

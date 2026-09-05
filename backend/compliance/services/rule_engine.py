@@ -1,5 +1,7 @@
 from decimal import Decimal, InvalidOperation
 
+from django.utils import timezone
+
 from compliance.models import ComplianceEvaluation, ComplianceResult, Rule, ScheduleEntry, StandardPackSize
 from .applicability import determine_applicability
 
@@ -112,8 +114,18 @@ def evaluate_inspection(inspection):
 
 def save_evaluation(inspection):
     applicability, outputs = evaluate_inspection(inspection)
-    evaluation, _ = ComplianceEvaluation.objects.update_or_create(inspection=inspection, defaults={"overall_status": "INCONCLUSIVE"})
-    evaluation.results.all().delete()
+    current = ComplianceEvaluation.objects.filter(inspection=inspection, is_current=True).first()
+    next_version = (current.evaluation_version + 1) if current else 1
+    if current:
+        current.is_current = False
+        current.superseded_at = timezone.now()
+        current.save(update_fields=["is_current", "superseded_at"])
+    evaluation = ComplianceEvaluation.objects.create(
+        inspection=inspection,
+        evaluation_version=next_version,
+        is_current=True,
+        overall_status="INCONCLUSIVE",
+    )
     ComplianceResult.objects.bulk_create([ComplianceResult(evaluation=evaluation, **output) for output in outputs])
     counts = {status: sum(1 for output in outputs if output["status"] == status) for status in ComplianceResult.Status.values}
     if counts["FAIL"]:

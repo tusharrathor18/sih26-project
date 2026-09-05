@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from django.db import transaction
 from django.utils import timezone
 from rest_framework import generics, parsers, status
 from rest_framework.response import Response
@@ -17,6 +18,8 @@ from .serializers import (
 from .services.extraction_service import save_extraction
 from .services.image_processing import process_image
 from .services.ocr_service import run_ocr
+from .audit import record_audit
+from .models import FieldCorrection
 
 class ScannerStatusView(APIView):
     permission_classes = [IsInspectorOfficer]
@@ -56,6 +59,7 @@ class InspectionListCreateView(InspectionAccessMixin, generics.ListCreateAPIView
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         inspection = serializer.save(officer=request.user)
+        record_audit(request, inspection, "INSPECTION_CREATED", "Inspection created.")
         output = InspectionSerializer(inspection, context={"request": request})
         return Response(output.data, status=status.HTTP_201_CREATED)
 
@@ -81,6 +85,7 @@ class InspectionImageCreateView(InspectionAccessMixin, APIView):
         )
         inspection.status = Inspection.Status.CREATED
         inspection.save(update_fields=["status", "updated_at"])
+        record_audit(request, inspection, "IMAGE_UPLOADED", f"Image uploaded: {image.original_filename}.", {"image_id": image.id, "image_type": image.image_type})
         return Response(InspectionImageSerializer(image, context={"request": request}).data, status=status.HTTP_201_CREATED)
 
 
@@ -89,6 +94,7 @@ class InspectionImageDeleteView(InspectionAccessMixin, APIView):
         inspection = generics.get_object_or_404(self.get_queryset(), inspection_id=inspection_id)
         image = generics.get_object_or_404(inspection.images.all(), id=image_id)
         image.delete()
+        record_audit(request, inspection, "IMAGE_DELETED", "Inspection image deleted.", {"image_id": image_id})
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -122,6 +128,7 @@ class InspectionProcessView(InspectionAccessMixin, APIView):
             return Response({"message": inspection.processing_error, "inspection": InspectionSerializer(inspection, context={"request": request}).data}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         save_extraction(inspection, "\n".join(all_text))
+        record_audit(request, inspection, "OCR_COMPLETED", "OCR and structured extraction completed.", {"image_count": len(images)})
         inspection.status = Inspection.Status.AWAITING_VERIFICATION
         inspection.processing_error = "One or more images could not be processed." if failures else ""
         inspection.save(update_fields=["status", "processing_error", "updated_at"])
@@ -129,12 +136,25 @@ class InspectionProcessView(InspectionAccessMixin, APIView):
 
 
 class InspectionVerificationView(InspectionAccessMixin, APIView):
+    @transaction.atomic
     def patch(self, request, inspection_id):
         inspection = generics.get_object_or_404(self.get_queryset(), inspection_id=inspection_id)
         data = generics.get_object_or_404(ExtractedProductData, inspection=inspection)
         serializer = InspectionVerificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         values = serializer.validated_data["values"]
+        for field_name, corrected_value in values.items():
+            original_value = data.values.get(field_name, "")
+            if str(original_value) != str(corrected_value):
+                FieldCorrection.objects.create(inspection=inspection, field_name=field_name, original_value=str(original_value), corrected_value=str(corrected_value), corrected_by=request.user)
+                record_audit(request, inspection, "FIELD_CORRECTED", f"Field corrected: {field_name}.", {"field_name": field_name}, str(original_value), str(corrected_value))
+        from compliance.models import ComplianceEvaluation
+        current_evaluation = ComplianceEvaluation.objects.filter(inspection=inspection, is_current=True).first()
+        if current_evaluation:
+            current_evaluation.is_current = False
+            current_evaluation.superseded_at = timezone.now()
+            current_evaluation.save(update_fields=["is_current", "superseded_at"])
+            record_audit(request, inspection, "COMPLIANCE_INVALIDATED", "Compliance results invalidated after extracted data changed.")
         data.values = values
         data.verification_status = ExtractedProductData.VerificationStatus.VERIFIED if values == data.original_values else ExtractedProductData.VerificationStatus.CORRECTED
         data.verified_by = request.user
@@ -144,4 +164,49 @@ class InspectionVerificationView(InspectionAccessMixin, APIView):
         inspection.verified_by = request.user
         inspection.verified_at = timezone.now()
         inspection.save(update_fields=["status", "verified_by", "verified_at", "updated_at"])
+        record_audit(request, inspection, "INSPECTION_VERIFIED", "Extracted information verified by officer.")
         return Response(InspectionSerializer(inspection, context={"request": request}).data)
+
+
+class InspectionReviewView(InspectionAccessMixin, generics.RetrieveAPIView):
+    serializer_class = InspectionSerializer
+    lookup_field = "inspection_id"
+
+
+class InspectionHistoryView(InspectionAccessMixin, generics.ListAPIView):
+    serializer_class = InspectionSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.query_params.get("search", "").strip()
+        status_filter = self.request.query_params.get("status", "").strip()
+        product = self.request.query_params.get("product", "").strip()
+        if search:
+            queryset = queryset.filter(inspection_id__icontains=search)
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if product:
+            queryset = queryset.filter(product_name__icontains=product)
+        return queryset
+
+
+class InspectionAuditView(InspectionAccessMixin, APIView):
+    def get(self, request, inspection_id):
+        inspection = generics.get_object_or_404(self.get_queryset(), inspection_id=inspection_id)
+        return Response([{"action": item.action, "description": item.description, "metadata": item.metadata, "timestamp": item.timestamp} for item in inspection.audit_logs.all()])
+
+
+class DashboardStatsView(InspectionAccessMixin, APIView):
+    def get(self, request):
+        from compliance.models import ComplianceEvaluation
+
+        inspections = self.get_queryset()
+        evaluations = ComplianceEvaluation.objects.filter(inspection__in=inspections, is_current=True)
+        statuses = [item.overall_status for item in evaluations]
+        return Response({
+            "total_inspections": inspections.count(),
+            "compliant": statuses.count("COMPLIANT"),
+            "non_compliant": statuses.count("NON_COMPLIANT"),
+            "needs_manual_review": statuses.count("NEEDS_MANUAL_REVIEW"),
+            "inconclusive": statuses.count("INCONCLUSIVE"),
+        })

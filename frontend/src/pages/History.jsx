@@ -13,10 +13,10 @@ const History = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    scannerService.listInspections().then(setInspections).catch((requestError) => setError(getApiErrorMessage(requestError, 'Unable to load inspection history.')));
-  }, []);
+    scannerService.listInspections({ search: query }).then(setInspections).catch((requestError) => setError(getApiErrorMessage(requestError, 'Unable to load inspection history.')));
+  }, [query]);
 
-  const filtered = inspections.filter((inspection) => inspection.inspection_id.toLowerCase().includes(query.toLowerCase()) || inspection.product_name.toLowerCase().includes(query.toLowerCase()));
+  const filtered = inspections;
 
   return (
     <div className="portal-layout">
@@ -66,7 +66,7 @@ const History = () => {
           </div>
             {error && <div className="scanner-alert">{error}</div>}
             {!error && !filtered.length && <div style={{ padding: '48px 24px', textAlign: 'center', color: '#5b6573' }}><ShieldCheck size={36} color="#356a9a" style={{ margin: '0 auto 12px' }} /><p>No inspections found.</p></div>}
-            {filtered.length > 0 && <div className="table-wrapper"><table className="inspections-table"><thead><tr><th>Inspection ID</th><th>Product</th><th>Date</th><th>Images</th><th>Status</th><th /></tr></thead><tbody>{filtered.map((inspection) => <tr key={inspection.inspection_id}><td className="font-mono text-cyan">{inspection.inspection_id}</td><td className="font-medium text-white">{inspection.product_name || 'Unlabelled package'}</td><td className="text-slate">{new Date(inspection.created_at).toLocaleString()}</td><td className="text-slate">{inspection.image_count}</td><td><span className="badge-status badge-review">{inspection.status.replaceAll('_', ' ')}</span></td><td><button className="btn-secondary" onClick={() => navigate(`/scan/${inspection.inspection_id}/review`)}><ExternalLink size={14} /> Review</button></td></tr>)}</tbody></table></div>}
+            {filtered.length > 0 && <div className="table-wrapper"><table className="inspections-table"><thead><tr><th>Inspection ID</th><th>Product</th><th>Date</th><th>Images</th><th>Status</th><th /></tr></thead><tbody>{filtered.map((inspection) => <tr key={inspection.inspection_id}><td className="font-mono text-cyan">{inspection.inspection_id}</td><td className="font-medium text-white">{inspection.product_name || 'Unlabelled package'}</td><td className="text-slate">{new Date(inspection.created_at).toLocaleString()}</td><td className="text-slate">{inspection.image_count}</td><td><span className="badge-status badge-review">{inspection.status.replaceAll('_', ' ')}</span></td><td><button className="btn-secondary" onClick={() => navigate(`/inspection/${inspection.inspection_id}`)}><ExternalLink size={14} /> Review</button></td></tr>)}</tbody></table></div>}
         </div>
       </main>
     </div>

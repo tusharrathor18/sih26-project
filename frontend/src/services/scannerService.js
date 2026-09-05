@@ -1,8 +1,8 @@
 import api from './api';
 
 export const scannerService = {
-  async listInspections() {
-    const response = await api.get('/scanner/inspections/');
+  async listInspections(params = {}) {
+    const response = await api.get('/scanner/inspections/history/', { params });
     return response.data;
   },
 
@@ -38,6 +38,16 @@ export const scannerService = {
 
   async verifyInspection(inspectionId, values) {
     const response = await api.patch(`/scanner/inspections/${inspectionId}/verify/`, { values });
+    return response.data;
+  },
+
+  async getAudit(inspectionId) {
+    const response = await api.get(`/scanner/inspections/${inspectionId}/audit/`);
+    return response.data;
+  },
+
+  async getStats() {
+    const response = await api.get('/scanner/dashboard/stats/');
     return response.data;
   },
 };

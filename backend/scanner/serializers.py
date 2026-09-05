@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ExtractedProductData, Inspection, InspectionImage, OCRResult
+from .models import AuditLog, ExtractedProductData, FieldCorrection, Inspection, InspectionImage, OCRResult
 
 
 MAX_IMAGE_SIZE = 10 * 1024 * 1024
@@ -56,14 +56,22 @@ class InspectionSerializer(serializers.ModelSerializer):
     extracted_data = ExtractedProductDataSerializer(read_only=True)
     image_count = serializers.IntegerField(source="images.count", read_only=True)
     officer_name = serializers.CharField(source="officer.officer_profile.name", read_only=True)
+    audit_logs = serializers.SerializerMethodField()
+    corrections = serializers.SerializerMethodField()
 
     class Meta:
         model = Inspection
         fields = [
             "id", "inspection_id", "product_name", "status", "processing_error",
-            "officer_name", "image_count", "images", "extracted_data", "created_at", "updated_at", "verified_at",
+            "officer_name", "image_count", "images", "extracted_data", "created_at", "updated_at", "verified_at", "audit_logs", "corrections",
         ]
-        read_only_fields = ["id", "inspection_id", "status", "processing_error", "officer_name", "image_count", "images", "extracted_data", "created_at", "updated_at", "verified_at"]
+        read_only_fields = ["id", "inspection_id", "status", "processing_error", "officer_name", "image_count", "images", "extracted_data", "created_at", "updated_at", "verified_at", "audit_logs", "corrections"]
+
+    def get_audit_logs(self, obj):
+        return [{"action": item.action, "description": item.description, "timestamp": item.timestamp, "metadata": item.metadata} for item in obj.audit_logs.all()]
+
+    def get_corrections(self, obj):
+        return [{"field_name": item.field_name, "original_value": item.original_value, "corrected_value": item.corrected_value, "correction_reason": item.correction_reason, "corrected_by": item.corrected_by.officer_profile.name, "created_at": item.created_at} for item in obj.corrections.all()]
 
 
 class InspectionCreateSerializer(serializers.ModelSerializer):

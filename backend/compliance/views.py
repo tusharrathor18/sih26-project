@@ -5,6 +5,7 @@ from rest_framework.exceptions import PermissionDenied
 from users.permissions import IsInspectorOfficer
 
 from scanner.models import Inspection
+from scanner.audit import record_audit
 from .models import ComplianceEvaluation, Rule
 from .serializers import ComplianceEvaluationSerializer, RuleSerializer
 from .services.rule_engine import save_evaluation
@@ -51,6 +52,7 @@ class ComplianceEvaluateView(APIView):
     def post(self, request, inspection_id):
         inspection = owned_inspection(request, inspection_id)
         evaluation, applicability = save_evaluation(inspection)
+        record_audit(request, inspection, "COMPLIANCE_RE_RUN" if evaluation.evaluation_version > 1 else "COMPLIANCE_RUN", "Compliance evaluation completed.", {"evaluation_version": evaluation.evaluation_version, "overall_status": evaluation.overall_status})
         return Response({"applicability": applicability, "evaluation": ComplianceEvaluationSerializer(evaluation).data}, status=status.HTTP_200_OK)
 
 
@@ -59,9 +61,8 @@ class ComplianceDetailView(APIView):
 
     def get(self, request, inspection_id):
         inspection = owned_inspection(request, inspection_id)
-        try:
-            evaluation = inspection.compliance_evaluation
-        except ComplianceEvaluation.DoesNotExist:
+        evaluation = inspection.compliance_evaluations.filter(is_current=True).first()
+        if not evaluation:
             return Response({"message": "Compliance has not been evaluated yet."}, status=status.HTTP_404_NOT_FOUND)
         return Response(ComplianceEvaluationSerializer(evaluation).data)
 
@@ -71,8 +72,7 @@ class ComplianceSummaryView(APIView):
 
     def get(self, request, inspection_id):
         inspection = owned_inspection(request, inspection_id)
-        try:
-            evaluation = inspection.compliance_evaluation
-        except ComplianceEvaluation.DoesNotExist:
+        evaluation = inspection.compliance_evaluations.filter(is_current=True).first()
+        if not evaluation:
             return Response({"message": "Compliance has not been evaluated yet."}, status=status.HTTP_404_NOT_FOUND)
         return Response(ComplianceEvaluationSerializer(evaluation).data)

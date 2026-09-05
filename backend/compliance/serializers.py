@@ -12,7 +12,6 @@ class RuleSerializer(serializers.ModelSerializer):
 
 class ComplianceResultSerializer(serializers.ModelSerializer):
     rule_reference = serializers.SerializerMethodField()
-    source_image_id = serializers.IntegerField(source="source_image_id", read_only=True)
 
     class Meta:
         model = ComplianceResult

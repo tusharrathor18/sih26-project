@@ -61,6 +61,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/inspection/:inspectionId"
+            element={<ProtectedRoute><InspectionReview /></ProtectedRoute>}
+          />
+          <Route
+            path="/inspection/:inspectionId/results"
+            element={<ProtectedRoute><Results /></ProtectedRoute>}
+          />
 
           {/* Root redirect: default to dashboard (ProtectedRoute will redirect to /login if unauthenticated) */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

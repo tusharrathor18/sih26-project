@@ -74,7 +74,10 @@ class ComplianceEvaluation(models.Model):
 		NEEDS_MANUAL_REVIEW = "NEEDS_MANUAL_REVIEW", "Needs manual review"
 		INCONCLUSIVE = "INCONCLUSIVE", "Inconclusive"
 
-	inspection = models.OneToOneField("scanner.Inspection", on_delete=models.CASCADE, related_name="compliance_evaluation")
+	inspection = models.ForeignKey("scanner.Inspection", on_delete=models.CASCADE, related_name="compliance_evaluations")
+	evaluation_version = models.PositiveIntegerField(default=1)
+	is_current = models.BooleanField(default=True)
+	superseded_at = models.DateTimeField(null=True, blank=True)
 	overall_status = models.CharField(max_length=30, choices=OverallStatus.choices, default=OverallStatus.INCONCLUSIVE)
 	total_rules = models.PositiveIntegerField(default=0)
 	passed = models.PositiveIntegerField(default=0)
@@ -83,6 +86,10 @@ class ComplianceEvaluation(models.Model):
 	manual_review = models.PositiveIntegerField(default=0)
 	not_applicable = models.PositiveIntegerField(default=0)
 	evaluated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["-evaluation_version"]
+		constraints = [models.UniqueConstraint(fields=["inspection", "evaluation_version"], name="unique_inspection_evaluation_version")]
 
 
 class ComplianceResult(models.Model):

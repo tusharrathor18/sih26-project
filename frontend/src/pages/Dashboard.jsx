@@ -22,40 +22,42 @@ const Dashboard = () => {
   const { officer } = useAuth();
   const navigate = useNavigate();
   const [inspections, setInspections] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
 
   useEffect(() => {
     scannerService.listInspections().then(setInspections).catch(() => setInspections([]));
+    scannerService.getStats().then(setDashboardStats).catch(() => setDashboardStats(null));
   }, []);
 
   const stats = [
     {
       title: 'Total Inspections',
-      value: String(inspections.length),
+      value: String(dashboardStats?.total_inspections ?? inspections.length),
       subtitle: 'Recorded under your account',
       icon: FileText,
       badgeColor: '#356a9a',
       iconBg: '#eef3f8',
     },
     {
-      title: 'Ready for Compliance',
-      value: String(inspections.filter((item) => item.status === 'READY_FOR_COMPLIANCE').length),
-      subtitle: 'Verified extraction records',
+      title: 'Compliant',
+      value: String(dashboardStats?.compliant ?? 0),
+      subtitle: 'Current evaluation results',
       icon: CheckCircle2,
       badgeColor: '#2e7d5b',
       iconBg: '#edf7f1',
     },
     {
-      title: 'Awaiting Verification',
-      value: String(inspections.filter((item) => item.status === 'AWAITING_VERIFICATION').length),
-      subtitle: 'Officer review required',
+      title: 'Non-compliant',
+      value: String(dashboardStats?.non_compliant ?? 0),
+      subtitle: 'Applicable failures recorded',
       icon: XCircle,
       badgeColor: '#b33a3a',
       iconBg: '#fbefef',
     },
     {
       title: 'Needs Review',
-      value: String(inspections.filter((item) => ['PROCESSING', 'FAILED'].includes(item.status)).length),
-      subtitle: 'Processing or needs retry',
+      value: String(dashboardStats?.needs_manual_review ?? 0),
+      subtitle: 'Officer review required',
       icon: AlertTriangle,
       badgeColor: '#b7791f',
       iconBg: '#fff8e9',
