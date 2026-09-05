@@ -1,4 +1,9 @@
-﻿from django.test import TestCase
+﻿import os
+import secrets
+from unittest.mock import patch
+
+from django.core.management import call_command, CommandError
+from django.test import TestCase
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
 from rest_framework import status
@@ -64,6 +69,10 @@ class OfficerAuthApiTests(TestCase):
         self.assertIn('user', response.data)
         self.assertEqual(response.data['user']['officer_id'], 'OFF-TEST-001')
         self.assertEqual(response.data['user']['name'], 'Test Inspector Kumar')
+        self.assertNotIn('password', response.data)
+        self.assertNotIn('password', response.data['user'])
+        self.assertNotIn('password', response.data['officer'])
+        self.assertNotIn(self.active_user.password, str(response.data))
 
     def test_login_invalid_password(self):
         """Verify login fails with wrong password"""
@@ -131,3 +140,39 @@ class OfficerAuthApiTests(TestCase):
         # Subsequent call with same token must now fail
         me_res = self.client.get('/api/auth/me/')
         self.assertEqual(me_res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class SeedOfficerSecurityTests(TestCase):
+    password_variables = {
+        f"OFFICER_{index:02d}_PASSWORD": secrets.token_urlsafe(24)
+        for index in range(1, 5)
+    }
+
+    def test_seed_fails_when_an_officer_password_is_missing(self):
+        with patch.dict(os.environ, self.password_variables, clear=False):
+            os.environ.pop("OFFICER_02_PASSWORD", None)
+            with self.assertRaises(CommandError) as context:
+                call_command("seed_officers")
+
+        self.assertIn("OFFICER_02_PASSWORD", str(context.exception))
+        self.assertFalse(User.objects.filter(username="admin_officer").exists())
+
+    def test_seed_hashes_new_password_and_does_not_reset_existing_password(self):
+        with patch.dict(os.environ, self.password_variables, clear=False):
+            call_command("seed_officers", verbosity=0)
+
+            user = User.objects.get(username="admin_officer")
+            first_hash = user.password
+            self.assertTrue(user.check_password(self.password_variables["OFFICER_01_PASSWORD"]))
+            self.assertNotEqual(first_hash, self.password_variables["OFFICER_01_PASSWORD"])
+
+            replacement_values = {
+                key: secrets.token_urlsafe(24)
+                for key in self.password_variables
+            }
+            with patch.dict(os.environ, replacement_values, clear=False):
+                call_command("seed_officers", verbosity=0)
+
+            user.refresh_from_db()
+            self.assertEqual(user.password, first_hash)
+            self.assertTrue(user.check_password(self.password_variables["OFFICER_01_PASSWORD"]))

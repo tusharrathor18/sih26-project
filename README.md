@@ -121,7 +121,7 @@ pip install -r requirements.txt
 # Run migrations
 python manage.py migrate
 
-# Seed initial pre-authorized officer accounts
+# Seed initial pre-authorized officer accounts after setting private passwords in backend/.env
 python manage.py seed_officers
 
 # Start Django Development Server
@@ -153,6 +153,31 @@ npm run dev
 
 Officer accounts are provisioned by department administrators or the development-only
 `seed_officers` management command. There is no public registration or signup flow.
+
+### Secure Officer Password Setup
+
+The repository contains four officer records. Copy `backend/.env.example` to `backend/.env`
+and set `OFFICER_01_PASSWORD` through `OFFICER_04_PASSWORD` to four private, different
+passwords. The template also reserves `OFFICER_05_PASSWORD` through `OFFICER_10_PASSWORD`
+for officer records added later. Do not put real values in `.env.example`, source code,
+frontend files, README files, or logs.
+
+Run the seed command from `backend/`:
+
+```powershell
+python manage.py seed_officers
+```
+
+The command fails if a required variable is missing, never uses a fallback password, hashes
+new passwords with Django `set_password()`, and does not reset passwords for existing users
+when rerun. Confirm a stored password is hashed without displaying its value:
+
+```powershell
+python manage.py shell -c "from django.contrib.auth.models import User; value=User.objects.get(username='admin_officer').password; print(value.split('$', 1)[0])"
+```
+
+Expected output is a hasher prefix such as `pbkdf2_sha256`. Officer API responses expose
+profile details only and never return a plaintext password or stored hash.
 
 ---
 

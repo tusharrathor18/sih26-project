@@ -9,11 +9,10 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
-load_dotenv(BASE_DIR / '.env')
-# Also fallback to root .env if not found in backend/
-if not (BASE_DIR / '.env').exists():
-    load_dotenv(BASE_DIR.parent / '.env')
+# Load the repository .env first, then let backend/.env override it.
+# This supports running Django from the backend folder or the repository root.
+load_dotenv(BASE_DIR.parent / '.env')
+load_dotenv(BASE_DIR / '.env', override=True)
 
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.environ.get(
