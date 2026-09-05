@@ -14,19 +14,19 @@ const ProtectedRoute = ({ children }) => {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        backgroundColor: '#0f172a',
-        color: '#f8fafc',
+        backgroundColor: '#f5f6f7',
+        color: '#1f2933',
         fontFamily: 'Inter, sans-serif'
       }}>
         <div style={{
           width: '40px',
           height: '40px',
-          border: '3px solid rgba(255, 255, 255, 0.1)',
-          borderTopColor: '#38bdf8',
+          border: '3px solid #d9dee5',
+          borderTopColor: '#17365d',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }} />
-        <p style={{ marginTop: '16px', color: '#94a3b8' }}>Verifying Officer Authorization...</p>
+        <p style={{ marginTop: '16px', color: '#5b6573' }}>Verifying Officer Authorization...</p>
         <style>{`
           @keyframes spin {
             to { transform: rotate(360deg); }

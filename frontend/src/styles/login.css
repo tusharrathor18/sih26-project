@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 32px 16px;
-  background: radial-gradient(circle at 50% 20%, #0f172a 0%, #060911 100%);
+  background: #f5f6f7;
   position: relative;
   overflow: hidden;
 }
@@ -18,7 +18,7 @@
   transform: translateX(-50%);
   width: 600px;
   height: 400px;
-  background: radial-gradient(circle, rgba(14, 165, 233, 0.12) 0%, rgba(0, 0, 0, 0) 70%);
+  background: transparent;
   pointer-events: none;
 }
 
@@ -43,14 +43,14 @@
 .emblem-circle {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.2) 0%, rgba(14, 165, 233, 0.05) 100%);
+  background: #eef3f8;
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
-  color: #38bdf8;
+  color: #356a9a;
   box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
 }
 
@@ -80,13 +80,13 @@
 
 .header-portal-sub {
   font-size: 13px;
-  color: #38bdf8;
+  color: #356a9a;
   font-weight: 500;
 }
 
 .card-divider {
   height: 1px;
-  background: linear-gradient(90deg, rgba(51, 65, 85, 0) 0%, rgba(51, 65, 85, 1) 50%, rgba(51, 65, 85, 0) 100%);
+  background: #d9dee5;
   margin: 24px 0 28px;
 }
 
@@ -111,7 +111,7 @@
 .alert-icon {
   flex-shrink: 0;
   margin-top: 1px;
-  color: #f43f5e;
+  color: #b33a3a;
 }
 
 /* Form inputs */
@@ -159,7 +159,7 @@
 }
 
 .form-input:focus {
-  border-color: #38bdf8;
+  border-color: #356a9a;
   box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
   background-color: #0b1120;
 }
@@ -173,7 +173,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background: #17365d;
   color: #ffffff;
   padding: 13px;
   font-size: 15px;
@@ -185,7 +185,7 @@
 }
 
 .btn-submit:hover:not(:disabled) {
-  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  background: #102b4b;
   box-shadow: 0 6px 18px rgba(2, 132, 199, 0.5);
   transform: translateY(-1px);
 }
@@ -223,7 +223,7 @@
 }
 
 .notice-icon {
-  color: #38bdf8;
+  color: #356a9a;
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -253,7 +253,7 @@
 }
 
 .btn-toggle-demo:hover {
-  color: #38bdf8;
+  color: #356a9a;
 }
 
 .demo-credentials-box {
@@ -285,13 +285,13 @@
   font-size: 10px;
   padding: 2px 6px;
   background: rgba(56, 189, 248, 0.15);
-  color: #38bdf8;
+  color: #356a9a;
   border-radius: 4px;
 }
 
 .text-warn {
   background: rgba(244, 63, 94, 0.15);
-  color: #f43f5e;
+  color: #b33a3a;
 }
 
 .demo-subnote {
@@ -303,7 +303,7 @@
 }
 
 .demo-subnote code {
-  color: #38bdf8;
+  color: #356a9a;
   background: #111827;
   padding: 1px 4px;
   border-radius: 3px;
@@ -315,3 +315,28 @@
   font-size: 11px;
   color: #64748b;
 }
+
+/* Neutral government portal theme */
+.login-wrapper { background: #f5f6f7; }
+.login-bg-glow { display: none; }
+.login-card { background: #ffffff; border: 1px solid #d9dee5; border-radius: 8px; box-shadow: 0 8px 24px rgba(31, 41, 51, 0.08); }
+.emblem-circle { background: #eef3f8; border: 1px solid #b9c8d8; color: #17365d; box-shadow: none; }
+.header-national { color: #5b6573; }
+.header-department { color: #4b5563; }
+.header-portal-title { color: #17365d; }
+.header-portal-sub { color: #356a9a; }
+.card-divider { background: #d9dee5; }
+.alert-error { background: #fbefef; border-color: #d99a9a; color: #8f3030; }
+.alert-icon { color: #b33a3a; }
+.form-label { color: #1f2933; }
+.input-icon { color: #6b7280; }
+.form-input { background: #ffffff; border-color: #bfc7d1; color: #1f2933; border-radius: 5px; }
+.form-input:focus { border-color: #356a9a; box-shadow: 0 0 0 3px rgba(53, 106, 154, 0.16); background: #ffffff; }
+.form-input::placeholder { color: #7b8490; }
+.btn-submit { background: #17365d; border: 1px solid #17365d; border-radius: 5px; box-shadow: none; }
+.btn-submit:hover:not(:disabled) { background: #102b4b; box-shadow: none; transform: none; }
+.security-notice { background: #f5f7f9; border-color: #d9dee5; border-radius: 5px; }
+.notice-icon { color: #356a9a; }
+.notice-text { color: #5b6573; }
+.notice-text strong { color: #1f2933; }
+.login-footer { color: #6b7280; }

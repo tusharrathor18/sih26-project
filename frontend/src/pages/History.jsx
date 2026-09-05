@@ -34,11 +34,11 @@ const History = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <HistoryIcon className="text-cyan" size={24} />
-                <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#f8fafc', margin: 0 }}>
+                <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1f2933', margin: 0 }}>
                   Inspection Audit Trail & History
                 </h1>
               </div>
-              <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: '4px', margin: 0 }}>
+              <p style={{ color: '#5b6573', fontSize: '14px', marginTop: '4px', margin: 0 }}>
                 Comprehensive log of all commodity verifications, audit records, and violation notices.
               </p>
             </div>
@@ -48,24 +48,24 @@ const History = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                backgroundColor: '#0f172a',
+                backgroundColor: '#ffffff',
                 padding: '8px 16px',
                 borderRadius: '6px',
-                border: '1px solid #334155'
+                border: '1px solid #d9dee5'
               }}>
-                <Search size={16} color="#64748b" />
+                <Search size={16} color="#6b7280" />
                 <input
                   type="text"
                   placeholder="Search inspection ID or product..."
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  style={{ background: 'transparent', border: 'none', color: '#f8fafc', outline: 'none', fontSize: '13px' }}
+                  style={{ background: 'transparent', border: 'none', color: '#1f2933', outline: 'none', fontSize: '13px' }}
                 />
                 </div>
             </div>
           </div>
             {error && <div className="scanner-alert">{error}</div>}
-            {!error && !filtered.length && <div style={{ padding: '48px 24px', textAlign: 'center', color: '#94a3b8' }}><ShieldCheck size={36} color="#38bdf8" style={{ margin: '0 auto 12px' }} /><p>No inspections found.</p></div>}
+            {!error && !filtered.length && <div style={{ padding: '48px 24px', textAlign: 'center', color: '#5b6573' }}><ShieldCheck size={36} color="#356a9a" style={{ margin: '0 auto 12px' }} /><p>No inspections found.</p></div>}
             {filtered.length > 0 && <div className="table-wrapper"><table className="inspections-table"><thead><tr><th>Inspection ID</th><th>Product</th><th>Date</th><th>Images</th><th>Status</th><th /></tr></thead><tbody>{filtered.map((inspection) => <tr key={inspection.inspection_id}><td className="font-mono text-cyan">{inspection.inspection_id}</td><td className="font-medium text-white">{inspection.product_name || 'Unlabelled package'}</td><td className="text-slate">{new Date(inspection.created_at).toLocaleString()}</td><td className="text-slate">{inspection.image_count}</td><td><span className="badge-status badge-review">{inspection.status.replaceAll('_', ' ')}</span></td><td><button className="btn-secondary" onClick={() => navigate(`/scan/${inspection.inspection_id}/review`)}><ExternalLink size={14} /> Review</button></td></tr>)}</tbody></table></div>}
         </div>
       </main>

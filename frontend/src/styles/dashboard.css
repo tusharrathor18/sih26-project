@@ -70,7 +70,7 @@
 .brand-badge {
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background: #17365d;
   color: #ffffff;
   font-weight: 800;
   font-size: 14px;
@@ -95,7 +95,7 @@
 
 .brand-subtitle {
   font-size: 11px;
-  color: #38bdf8;
+  color: #356a9a;
   font-weight: 500;
 }
 
@@ -123,7 +123,7 @@
 }
 
 .nav-link.active {
-  color: #38bdf8;
+  color: #356a9a;
   background-color: rgba(56, 189, 248, 0.1);
   font-weight: 600;
 }
@@ -146,7 +146,7 @@
 }
 
 .officer-avatar {
-  color: #38bdf8;
+  color: #356a9a;
   display: flex;
   align-items: center;
 }
@@ -172,7 +172,7 @@
 }
 
 .badge-id {
-  color: #38bdf8;
+  color: #356a9a;
   font-family: var(--font-mono);
   font-weight: 600;
 }
@@ -185,7 +185,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #f43f5e;
+  color: #b33a3a;
   font-size: 13px;
   font-weight: 500;
   padding: 8px 12px;
@@ -208,7 +208,7 @@
 
 /* Welcome Banner */
 .welcome-banner {
-  background: linear-gradient(135deg, #111e38 0%, #0d1628 100%);
+  background: #ffffff;
   border: 1px solid #1e3a5f;
   border-radius: 12px;
   padding: 28px 32px;
@@ -225,7 +225,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #38bdf8;
+  color: #356a9a;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -328,7 +328,7 @@
 
 /* Rules Overview Card */
 .rules-overview-card {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: #ffffff;
   border: 1px solid #334155;
   border-radius: 10px;
   padding: 20px 24px;
@@ -358,7 +358,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #38bdf8;
+  color: #356a9a;
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
@@ -463,3 +463,40 @@
   gap: 6px;
   font-size: 12.5px;
 }
+
+/* Neutral government portal theme */
+.gov-header { background: #17365d; border-bottom-color: #102b4b; }
+.gov-topbar { background: #102b4b; border-bottom-color: rgba(255, 255, 255, 0.14); }
+.emblem-icon { color: #d9b36c; }
+.gov-agency, .portal-sub { color: #dbe5ef; }
+.brand-badge { background: #ffffff; color: #17365d; box-shadow: none; border-radius: 5px; }
+.brand-title { color: #ffffff; }
+.brand-subtitle { color: #dbe5ef; }
+.nav-link { color: #dbe5ef; border-radius: 4px; }
+.nav-link:hover { color: #ffffff; background: rgba(255, 255, 255, 0.10); }
+.nav-link.active { color: #ffffff; background: rgba(255, 255, 255, 0.18); }
+.officer-badge { background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.22); border-radius: 5px; }
+.officer-avatar, .badge-id { color: #ffffff; }
+.officer-name { color: #ffffff; }
+.officer-sub, .badge-jur { color: #dbe5ef; }
+.btn-logout { color: #ffe1e1; background: rgba(179, 58, 58, 0.24); border-color: rgba(255, 220, 220, 0.45); border-radius: 5px; }
+.btn-logout:hover { background: rgba(179, 58, 58, 0.42); }
+.portal-layout { background: #f5f6f7; }
+.welcome-banner { background: #ffffff; border-color: #d9dee5; border-radius: 7px; box-shadow: none; }
+.welcome-tag, .btn-link-action { color: #356a9a; }
+.welcome-heading, .section-title { color: #1f2933; }
+.officer-detail-bar, .section-desc { color: #5b6573; }
+.meta-icon, .meta-sep { color: #7b8490; }
+.stat-card, .inspections-section { background: #ffffff; border-color: #d9dee5; border-radius: 7px; box-shadow: none; }
+.stat-card:hover { transform: none; box-shadow: 0 2px 8px rgba(31, 41, 51, 0.06); }
+.stat-title, .rules-card-content p { color: #5b6573; }
+.stat-value, .rules-card-content h3 { color: #1f2933; }
+.rules-overview-card { background: #ffffff; border-color: #d9dee5; border-radius: 7px; }
+.section-header { border-bottom-color: #d9dee5; }
+.inspections-table th { background: #eef1f4; color: #4b5563; border-bottom-color: #d9dee5; }
+.inspections-table td { border-bottom-color: #e6e9ed; }
+.inspections-table tbody tr:hover { background: #f5f7f9; }
+.badge-status { border-radius: 4px; }
+.badge-pass { background: #edf7f1; color: #276b4d; border-color: #acd4bd; }
+.badge-fail { background: #fbefef; color: #963434; border-color: #d99a9a; }
+.badge-review { background: #fff8e9; color: #8b5d16; border-color: #e4c987; }

@@ -254,6 +254,44 @@ python manage.py test scanner.tests users.tests
 - [x] **Prompt 1/15:** Project Foundation, React + Vite, Django, MySQL, OfficerProfile & Dashboard Skeleton.
 - [x] **Prompt 2/15:** React-Django API integration, officer authentication, protected routes, logout & authorization foundation.
 - [x] **Prompt 3/15:** Multi-image inspection ingestion, preprocessing, OCR storage, structured extraction & officer verification.
+- [x] **Prompt 4/15:** PDF-sourced Legal Metrology applicability, rule evaluation, schedules, evidence and manual-review results.
+
+## 9. Prompt 4 Legal Metrology Compliance Engine
+
+The compliance engine is sourced from `9 The Legal Metrology (Package Commodities) Rules, 2011.pdf`.
+The parsed source covers Rules 3–31 on PDF pages 4–26 and the First through Fourth Schedules
+on pages 28–34. Rule records retain their source page and reference. The engine evaluates
+applicability before declarations and distinguishes `PASS`, `FAIL`, `WARNING`,
+`MANUAL_REVIEW`, `NOT_APPLICABLE`, and `NOT_DETECTED`.
+
+Seed the PDF-derived rules and schedules:
+
+```powershell
+cd backend
+python manage.py makemigrations
+python manage.py migrate
+python manage.py seed_rules
+```
+
+Compliance APIs are mounted under `/api/compliance/`:
+
+```text
+GET  /api/compliance/rules/
+POST /api/compliance/inspections/<inspection_id>/evaluate/
+GET  /api/compliance/inspections/<inspection_id>/compliance/
+GET  /api/compliance/inspections/<inspection_id>/compliance/summary/
+```
+
+The verified inspection review page exposes **Run Compliance Check** and displays the overall
+status, counts, rule reference, requirement, detected value, explanation, recommendation,
+evidence metadata, and source PDF page. Physical quantity accuracy and visual measurements
+remain `MANUAL_REVIEW` unless authorised inspection measurements or reliable calibrated image
+evidence are supplied. The interface describes the result as an automated preliminary
+assessment; an authorised Legal Metrology Officer must verify it.
+
+The provided Legal Metrology (Packaged Commodities) Rules, 2011 PDF is used as the rule-source
+for this implementation. Applicable amendments and current legal requirements must be verified
+against the official current legal source before production/legal reliance.
 - [ ] **Prompt 3/15:** Image Preprocessing (Deskewing, Contrast Adjustment, Bounding Box ROI).
 - [ ] **Prompt 4/15:** OCR Engine Integration (PaddleOCR / Tesseract).
 - [ ] **Prompt 5/15:** Text Parsing & Entity Extraction (MRP, Net Quantity, Dates, Manufacturer).

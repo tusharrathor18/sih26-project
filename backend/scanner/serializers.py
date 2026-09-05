@@ -69,7 +69,11 @@ class InspectionSerializer(serializers.ModelSerializer):
 class InspectionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Inspection
-        fields = ["product_name"]
+        fields = [
+            "product_name", "commodity_category", "package_type", "consumer_type",
+            "approximate_quantity", "quantity_unit", "actual_measured_quantity",
+            "measurement_unit", "measurement_method", "sample_size", "lot_size",
+        ]
 
 
 class InspectionVerificationSerializer(serializers.Serializer):

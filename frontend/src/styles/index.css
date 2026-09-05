@@ -4,28 +4,23 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Consolas', 'Courier New', monospace;
 
-  /* Color Palette — Official Government Enforcement Theme */
-  --bg-dark: #090d16;
-  --bg-surface: #0f172a;
-  --bg-card: #1e293b;
-  --bg-card-hover: #273549;
-
-  --border-subtle: #1e293b;
-  --border-card: #334155;
-  --border-focus: #38bdf8;
-
-  --primary-blue: #0284c7;
-  --primary-blue-hover: #0369a1;
-  --primary-accent: #38bdf8;
-  --gold-accent: #d97706;
-
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-
-  --status-pass: #10b981;
-  --status-fail: #f43f5e;
-  --status-warning: #f59e0b;
+  --bg-dark: #f5f6f7;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #eef1f4;
+  --border-subtle: #e6e9ed;
+  --border-card: #d9dee5;
+  --border-focus: #356a9a;
+  --primary-blue: #17365d;
+  --primary-blue-hover: #102b4b;
+  --primary-accent: #356a9a;
+  --gold-accent: #b7791f;
+  --text-primary: #1f2933;
+  --text-secondary: #5b6573;
+  --text-muted: #6b7280;
+  --status-pass: #2e7d5b;
+  --status-fail: #b33a3a;
+  --status-warning: #b7791f;
 }
 
 * {
@@ -67,15 +62,15 @@ button {
 }
 
 .text-cyan {
-  color: #38bdf8;
+  color: var(--primary-accent);
 }
 
 .text-slate {
-  color: #94a3b8;
+  color: var(--text-secondary);
 }
 
 .text-white {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .font-medium {
@@ -87,38 +82,49 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  background: var(--primary-blue);
   color: #ffffff;
   padding: 12px 24px;
   font-weight: 600;
   font-size: 14px;
-  border-radius: 8px;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
-  transition: all 0.2s ease;
+  border-radius: 6px;
+  border: 1px solid var(--primary-blue);
+  transition: background-color 0.15s ease;
 }
 
 .btn-primary-action:hover {
-  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+  background: var(--primary-blue-hover);
 }
 
 .btn-secondary {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background-color: #1e293b;
-  border: 1px solid #334155;
-  color: #e2e8f0;
+  background-color: #ffffff;
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
   padding: 8px 16px;
   font-size: 13px;
   font-weight: 500;
-  border-radius: 6px;
-  transition: all 0.2s;
+  border-radius: 5px;
+  transition: background-color 0.15s, border-color 0.15s;
 }
 
 .btn-secondary:hover {
-  background-color: #334155;
-  border-color: #475569;
-  color: #ffffff;
+  background-color: #eef1f4;
+  border-color: #b8c1cc;
+  color: var(--primary-blue);
 }
+
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(53, 106, 154, 0.28);
+  outline-offset: 2px;
+}
+
+/* Keep legacy inline page states aligned with the shared light theme. */
+[style*="#f8fafc"] { color: #1f2933 !important; }
+[style*="#94a3b8"] { color: #5b6573 !important; }
+[style*="#64748b"] { color: #6b7280 !important; }
+[style*="#0f172a"] { background-color: #f5f6f7 !important; }
+[style*="#1e293b"] { background-color: #ffffff !important; }
+[style*="#334155"] { border-color: #d9dee5 !important; }

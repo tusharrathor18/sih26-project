@@ -5,8 +5,8 @@ const StatCard = ({ title, value, subtitle, icon: Icon, badgeColor, iconBg }) =>
     <div className="stat-card">
       <div className="stat-card-header">
         <span className="stat-title">{title}</span>
-        <div className="stat-icon-wrapper" style={{ backgroundColor: iconBg || '#1e293b' }}>
-          {Icon && <Icon size={22} style={{ color: badgeColor || '#38bdf8' }} />}
+        <div className="stat-icon-wrapper" style={{ backgroundColor: iconBg || '#eef1f4' }}>
+          {Icon && <Icon size={22} style={{ color: badgeColor || '#356a9a' }} />}
         </div>
       </div>
       <div className="stat-value">{value}</div>
