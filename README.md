@@ -166,6 +166,27 @@ npm run dev
 | `OFF-ADMIN-001` | ADMIN | Legal Metrology Controller (HQ) |
 | `OFF-INACT-2024-099` | INSPECTOR | *Inactive Account (Access Denied Test)* |
 
+
+1. Clone GitHub repo
+        ↓
+2. Install Python + Node.js + MySQL
+        ↓
+3. Create database
+        ↓
+4. Create their own .env
+        ↓
+5. Install backend dependencies
+        ↓
+6. Run migrations
+        ↓
+7. Run your seed/demo-data command
+        ↓
+8. Start Django
+        ↓
+9. Start frontend
+        ↓
+10. Open localhost in browser
+
 Officer accounts are provisioned by department administrators or the development-only
 `seed_officers` management command. There is no public registration or signup flow.
 
@@ -224,271 +245,3 @@ profile details only and never return a plaintext password or stored hash.
 The login response returns a server-side DRF token and safe officer profile fields only.
 The frontend stores the token for the session and sends it as `Authorization: Token <token>`.
 API errors are mapped to user-friendly messages, and invalid or inactive accounts cannot log in.
-
-### Frontend API Configuration
-
-Copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL` to the Django API
-base URL. Backend configuration remains in `backend/.env`; both `.env` files are ignored by Git.
-
-### Prompt 2 Verification
-
-Run the backend checks from `backend/`:
-
-```powershell
-python manage.py check
-python manage.py test users
-python manage.py seed_officers
-python manage.py runserver
-```
-
-In a separate terminal, run the frontend from `frontend/`:
-
-```powershell
-npm install
-npm run dev
-```
-
-Open `http://localhost:5173/`, sign in with an officer account provisioned in the database,
-verify the dashboard officer details, refresh the page, visit the protected routes, and test
-logout. After logout, `/dashboard`, `/scan`, `/history`, and inspection-specific review/results
-routes redirect to `/login`.
-
-## 8. Prompt 3 Product Inspection Pipeline
-
-The authenticated scanner workflow is now available at `/scan`:
-
-1. Create an inspection and optionally label the product.
-2. Select multiple JPEG, PNG, or WEBP package images, or capture them with a supported camera.
-3. Assign each image a package side, preview it, and remove unsuitable images.
-4. Upload originals to Django media storage, preprocess a copy, and run the OCR service.
-5. Review detected text and structured fields at `/scan/<inspection_id>/review`.
-6. Correct or verify fields. Original OCR values remain stored for auditability.
-
-Inspection APIs are authenticated and owner-scoped:
-
-```text
-POST   /api/scanner/inspections/
-GET    /api/scanner/inspections/
-GET    /api/scanner/inspections/<inspection_id>/
-POST   /api/scanner/inspections/<inspection_id>/images/
-DELETE /api/scanner/inspections/<inspection_id>/images/<image_id>/
-POST   /api/scanner/inspections/<inspection_id>/process/
-PATCH  /api/scanner/inspections/<inspection_id>/verify/
-```
-
-The processing layer stores original images, processed copies, OCR regions, confidence,
-and structured extraction metadata. It does not evaluate legal compliance or produce
-PASS/FAIL decisions; that belongs to Prompt 4. Extraction is assistive and requires
-officer verification.
-
-### OCR Runtime
-
-Pillow is required for Django image validation. OpenCV is used when installed for
-denoising and enhancement. PaddleOCR is loaded lazily by the processing service so the
-API can report a clear processing failure when its platform-compatible PaddlePaddle
-runtime is not installed. Python 3.13 support for PaddlePaddle must be verified before
-installing it on Windows; use a supported Python environment and then install the
-versions listed in `backend/requirements.txt`.
-
-After changing models or dependencies:
-
-```powershell
-cd backend
-python manage.py makemigrations
-python manage.py migrate
-python manage.py test scanner.tests users.tests
-```
-
----
-
-## 8. Development Roadmap (15 Prompts)
-
-- [x] **Prompt 1/15:** Project Foundation, React + Vite, Django, MySQL, OfficerProfile & Dashboard Skeleton.
-- [x] **Prompt 2/15:** React-Django API integration, officer authentication, protected routes, logout & authorization foundation.
-- [x] **Prompt 3/15:** Multi-image inspection ingestion, preprocessing, OCR storage, structured extraction & officer verification.
-- [x] **Prompt 4/15:** PDF-sourced Legal Metrology applicability, rule evaluation, schedules, evidence and manual-review results.
-- [x] **Prompt 5/15:** Officer verification, correction history, compliance result views, inspection history, dashboard statistics and audit trail.
-
-## 10. Prompt 5 Verification and Audit Workflow
-
-Prompt 5 adds append-only field corrections and inspection audit events. Corrections preserve
-the original extracted value, corrected value, officer, and timestamp. Changing verified data
-invalidates the current compliance evaluation; running the check again creates a new version
-and preserves the previous result.
-
-New scanner endpoints include:
-
-```text
-GET /api/scanner/inspections/history/?search=<text>&status=<status>&product=<text>
-GET /api/scanner/inspections/<inspection_id>/review/
-GET /api/scanner/inspections/<inspection_id>/audit/
-GET /api/scanner/dashboard/stats/
-```
-
-Compliance results are available through:
-
-```text
-GET /api/compliance/inspections/<inspection_id>/results/
-GET /api/compliance/inspections/<inspection_id>/compliance/
-```
-
-The frontend routes are `/inspection/<id>`, `/inspection/<id>/review`, and
-`/inspection/<id>/results`. History search is enforced by Django ownership-filtered
-querysets. Audit logs and corrections are read-only in Django Admin.
-
-## 9. Prompt 4 Legal Metrology Compliance Engine
-
-The compliance engine is sourced from `9 The Legal Metrology (Package Commodities) Rules, 2011.pdf`.
-The parsed source covers Rules 3–31 on PDF pages 4–26 and the First through Fourth Schedules
-on pages 28–34. Rule records retain their source page and reference. The engine evaluates
-applicability before declarations and distinguishes `PASS`, `FAIL`, `WARNING`,
-`MANUAL_REVIEW`, `NOT_APPLICABLE`, and `NOT_DETECTED`.
-
-Seed the PDF-derived rules and schedules:
-
-```powershell
-cd backend
-python manage.py makemigrations
-python manage.py migrate
-python manage.py seed_rules
-```
-
-Compliance APIs are mounted under `/api/compliance/`:
-
-```text
-GET  /api/compliance/rules/
-POST /api/compliance/inspections/<inspection_id>/evaluate/
-GET  /api/compliance/inspections/<inspection_id>/compliance/
-GET  /api/compliance/inspections/<inspection_id>/compliance/summary/
-```
-
-The verified inspection review page exposes **Run Compliance Check** and displays the overall
-status, counts, rule reference, requirement, detected value, explanation, recommendation,
-evidence metadata, and source PDF page. Physical quantity accuracy and visual measurements
-remain `MANUAL_REVIEW` unless authorised inspection measurements or reliable calibrated image
-evidence are supplied. The interface describes the result as an automated preliminary
-assessment; an authorised Legal Metrology Officer must verify it.
-
-The provided Legal Metrology (Packaged Commodities) Rules, 2011 PDF is used as the rule-source
-for this implementation. Applicable amendments and current legal requirements must be verified
-against the official current legal source before production/legal reliance.
-- [ ] **Prompt 3/15:** Image Preprocessing (Deskewing, Contrast Adjustment, Bounding Box ROI).
-- [ ] **Prompt 4/15:** OCR Engine Integration (PaddleOCR / Tesseract).
-- [ ] **Prompt 5/15:** Text Parsing & Entity Extraction (MRP, Net Quantity, Dates, Manufacturer).
-- [ ] **Prompt 6/15:** Legal Metrology Rules Engine (Rules 2011 Compliance Verification).
-- [ ] **Prompt 7/15:** Violation Classifier & Scoring Matrix.
-- [ ] **Prompt 8/15:** Officer Verification & Interactive Correction Interface.
-- [ ] **Prompt 9/15:** Inspection Report Generation & Digital Notice Export (PDF).
-- [ ] **Prompt 10/15:** Evidence Gallery & Label Annotation Viewer.
-- [ ] **Prompt 11/15:** Search, Filter & Audit Trail Dashboard.
-- [ ] **Prompt 12/15:** Role-Based Access Control & Admin Officer Management.
-- [ ] **Prompt 13/15:** Performance Optimization, Caching & Batch Inspections.
-- [ ] **Prompt 14/15:** Offline-first PWA Sync & Edge Support.
-- [ ] **Prompt 15/15:** Production Hardening, Dockerization & Final Deployment.
-
-## Prompt 6 Reports, Testing and Security
-
-Completed inspections have a protected backend-generated PDF report:
-
-```text
-GET /api/scanner/inspections/<inspection_id>/report/pdf/
-```
-
-The report includes inspection and officer metadata, extracted and corrected fields,
-persisted rule-by-rule results, evidence references, manual-review requirements, and the
-audit timeline. The Results page provides **Download PDF Report**. Access uses the same
-owner/admin queryset as inspection details, and report errors do not expose filesystem paths.
-
-Run backend validation from `backend/`:
-
-```powershell
-python manage.py check
-python manage.py test
-```
-
-Report generation requires `reportlab`. Uploads are limited to 10 MB and JPEG, PNG, or
-WEBP files; extension, MIME type, and actual image contents are validated. Original images
-remain separate from processed copies, generated storage names are used, and history is
-paginated at 25 records per page. Set `SECRET_KEY`, `DEBUG`, database variables, and
-`CORS_ALLOWED_ORIGINS` in `backend/.env`; never use the example secret outside development.
-
-Automated results are preliminary decision-support output. Officers must perform physical
-measurements and other manual checks identified in the report. Known limitations include
-synchronous OCR/image processing, source-image references instead of full-resolution PDF
-embeds, and no production backup or deployment pipeline in Prompt 6.
-
-## Setup for Another Developer
-
-This repository is designed to recreate a local copy with Django migrations and safe seed
-commands. It does not provide access to the original MySQL database and does not require a
-database dump.
-
-### 1. Clone and create a local MySQL database
-
-```sql
-CREATE DATABASE sih26 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-### 2. Configure private environment values
-
-Copy `.env.example` to `backend/.env` and set only local values:
-
-```powershell
-cd backend
-copy ..\.env.example .env
-```
-
-Set `DB_NAME=sih26`, your local MySQL username/password, a new local `SECRET_KEY`, and the
-four officer password variables used by the four officer records currently defined in this
-repository. The remaining six `OFFICER_*` placeholders are reserved for future officer
-records. Never commit `backend/.env`.
-
-### 3. Install, migrate, and seed
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py seed_demo_data
-```
-
-`seed_demo_data` calls the existing `seed_officers` command and seeds legal rules only when
-the local database has no rules, then creates
-two clearly marked demo inspections, extracted data, compliance evaluations, and audit
-events. It is idempotent: existing demo records and existing officer passwords are not
-overwritten. If synchronizing an already-created local officer account with new private
-password variables is explicitly required, use:
-
-```powershell
-python manage.py seed_officers --reset-passwords
-```
-
-The demo inspections contain no uploaded image files; they exercise the dashboard, review,
-compliance, history, audit, and PDF report paths without copying personal evidence.
-
-### 4. Start the applications
-
-```powershell
-python manage.py runserver
-```
-
-In a second terminal:
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-The Vite development proxy sends `/api` requests to `http://127.0.0.1:8000`. To use another
-backend URL, create `frontend/.env` from `frontend/.env.example` and set `VITE_API_BASE_URL`.
-
-### Database reproduction decision
-
-Do not commit a MySQL dump for this project. Migrations are the schema source of truth, and
-the seed commands reproduce non-sensitive rules, officer metadata, demo inspections,
-extracted values, compliance evaluations, and audit events. A raw dump would be easier to
-accidentally ship with personal data, password hashes, tokens, or environment-specific
-database state. If a dump is ever generated for private debugging, keep it outside Git and
-do not import it before migrations without explicitly matching its migration state.
