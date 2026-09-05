@@ -333,3 +333,34 @@ against the official current legal source before production/legal reliance.
 - [ ] **Prompt 13/15:** Performance Optimization, Caching & Batch Inspections.
 - [ ] **Prompt 14/15:** Offline-first PWA Sync & Edge Support.
 - [ ] **Prompt 15/15:** Production Hardening, Dockerization & Final Deployment.
+
+## Prompt 6 Reports, Testing and Security
+
+Completed inspections have a protected backend-generated PDF report:
+
+```text
+GET /api/scanner/inspections/<inspection_id>/report/pdf/
+```
+
+The report includes inspection and officer metadata, extracted and corrected fields,
+persisted rule-by-rule results, evidence references, manual-review requirements, and the
+audit timeline. The Results page provides **Download PDF Report**. Access uses the same
+owner/admin queryset as inspection details, and report errors do not expose filesystem paths.
+
+Run backend validation from `backend/`:
+
+```powershell
+python manage.py check
+python manage.py test
+```
+
+Report generation requires `reportlab`. Uploads are limited to 10 MB and JPEG, PNG, or
+WEBP files; extension, MIME type, and actual image contents are validated. Original images
+remain separate from processed copies, generated storage names are used, and history is
+paginated at 25 records per page. Set `SECRET_KEY`, `DEBUG`, database variables, and
+`CORS_ALLOWED_ORIGINS` in `backend/.env`; never use the example secret outside development.
+
+Automated results are preliminary decision-support output. Officers must perform physical
+measurements and other manual checks identified in the report. Known limitations include
+synchronous OCR/image processing, source-image references instead of full-resolution PDF
+embeds, and no production backup or deployment pipeline in Prompt 6.

@@ -3,7 +3,7 @@ import api from './api';
 export const scannerService = {
   async listInspections(params = {}) {
     const response = await api.get('/scanner/inspections/history/', { params });
-    return response.data;
+    return response.data.results || response.data;
   },
 
   async createInspection(productName = '') {
@@ -48,6 +48,13 @@ export const scannerService = {
 
   async getStats() {
     const response = await api.get('/scanner/dashboard/stats/');
+    return response.data;
+  },
+
+  async downloadReport(inspectionId) {
+    const response = await api.get(`/scanner/inspections/${inspectionId}/report/pdf/`, {
+      responseType: 'blob',
+    });
     return response.data;
   },
 };

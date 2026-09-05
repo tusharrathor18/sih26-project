@@ -10,6 +10,7 @@ from .views import (
     InspectionAuditView,
     DashboardStatsView,
     InspectionVerificationView,
+    InspectionReportView,
     ScannerStatusView,
 )
 
@@ -21,6 +22,7 @@ urlpatterns = [
     path('inspections/<str:inspection_id>/', InspectionDetailView.as_view(), name='inspection-detail'),
     path('inspections/<str:inspection_id>/review/', InspectionReviewView.as_view(), name='inspection-review'),
     path('inspections/<str:inspection_id>/audit/', InspectionAuditView.as_view(), name='inspection-audit'),
+    path('inspections/<str:inspection_id>/report/pdf/', InspectionReportView.as_view(), name='inspection-report-pdf'),
     path('inspections/<str:inspection_id>/images/', InspectionImageCreateView.as_view(), name='inspection-image-create'),
     path('inspections/<str:inspection_id>/images/<int:image_id>/', InspectionImageDeleteView.as_view(), name='inspection-image-delete'),
     path('inspections/<str:inspection_id>/process/', InspectionProcessView.as_view(), name='inspection-process'),

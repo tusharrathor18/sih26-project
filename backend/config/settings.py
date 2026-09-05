@@ -18,10 +18,10 @@ if not (BASE_DIR / '.env').exists():
 # Quick-start development settings - unsuitable for production
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
-    'django-insecure-legal-metrology-dev-key-change-in-production-2024!#$'
+    'django-insecure-development-only-key-set-SECRET_KEY-in-production'
 )
 
-DEBUG = os.environ.get('DEBUG', 'True').strip().lower() in ('true', '1', 'yes')
+DEBUG = os.environ.get('DEBUG', 'False').strip().lower() in ('true', '1', 'yes')
 
 ALLOWED_HOSTS = [
     host.strip()
@@ -143,6 +143,8 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 25,
 }
 
 # CORS Configuration

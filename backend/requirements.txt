@@ -5,6 +5,7 @@ PyMySQL>=1.1.0
 cryptography>=42.0.0
 python-dotenv>=1.0.0
 Pillow>=10.0.0
+reportlab>=4.0.0
 opencv-python-headless>=4.10.0
 # PaddleOCR requires a compatible PaddlePaddle runtime for the target platform.
 # Install it separately after verifying the supported Python version.

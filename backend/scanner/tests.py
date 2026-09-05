@@ -9,6 +9,7 @@ from rest_framework.test import APIClient
 from users.models import OfficerProfile
 
 from .models import AuditLog, FieldCorrection, Inspection, InspectionImage
+from compliance.models import ComplianceEvaluation, ComplianceResult, Rule
 from .services.extraction_service import extract_fields
 from .services.image_processing import process_image
 
@@ -113,3 +114,36 @@ class VerificationAuditTests(TestCase):
         self.assertEqual(self.inspection.extracted_data.original_values["mrp"], "199")
         self.assertTrue(AuditLog.objects.filter(inspection=self.inspection, action="FIELD_CORRECTED").exists())
         self.assertTrue(AuditLog.objects.filter(inspection=self.inspection, action="INSPECTION_VERIFIED").exists())
+
+
+class InspectionReportApiTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="report_user", password="TestPassword@123")
+        OfficerProfile.objects.create(user=self.user, officer_id="OFF-REPORT-001", name="Report Officer", designation="Inspector", jurisdiction="Zone 1", role="INSPECTOR")
+        self.other_user = User.objects.create_user(username="report_other", password="TestPassword@123")
+        OfficerProfile.objects.create(user=self.other_user, officer_id="OFF-REPORT-002", name="Other Officer", designation="Inspector", jurisdiction="Zone 2", role="INSPECTOR")
+        self.inspection = Inspection.objects.create(officer=self.user, product_name="Tea")
+        rule = Rule.objects.create(rule_number="6", title="Declarations", requirement="Required declaration", source_reference="Rule 6")
+        evaluation = ComplianceEvaluation.objects.create(inspection=self.inspection, overall_status="NEEDS_MANUAL_REVIEW", total_rules=1, manual_review=1)
+        ComplianceResult.objects.create(evaluation=evaluation, rule=rule, status="MANUAL_REVIEW", explanation="Verify on package", recommendation="Physical inspection required")
+
+    def test_authorized_report_contains_persisted_content(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.get(f"/api/scanner/inspections/{self.inspection.inspection_id}/report/pdf/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/pdf")
+        self.assertIn(self.inspection.inspection_id.encode(), response.content)
+        self.assertTrue(response.content.startswith(b"%PDF"))
+
+    def test_report_is_owner_scoped(self):
+        self.client.force_authenticate(self.other_user)
+        response = self.client.get(f"/api/scanner/inspections/{self.inspection.inspection_id}/report/pdf/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_report_without_evaluation_is_inconclusive(self):
+        inspection = Inspection.objects.create(officer=self.user)
+        self.client.force_authenticate(self.user)
+        response = self.client.get(f"/api/scanner/inspections/{inspection.inspection_id}/report/pdf/")
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.content.startswith(b"%PDF"))

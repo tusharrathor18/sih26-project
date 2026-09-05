@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from PIL import Image
 from rest_framework import serializers
 
 from .models import AuditLog, ExtractedProductData, FieldCorrection, Inspection, InspectionImage, OCRResult
@@ -33,6 +36,14 @@ class InspectionImageSerializer(serializers.ModelSerializer):
         content_type = getattr(value, "content_type", "")
         if content_type and content_type not in {"image/jpeg", "image/png", "image/webp"}:
             raise serializers.ValidationError("Unsupported image format. Use JPEG, PNG, or WEBP.")
+        if Path(value.name).suffix.lower() not in {".jpg", ".jpeg", ".png", ".webp"}:
+            raise serializers.ValidationError("Unsupported image extension. Use JPG, PNG, or WEBP.")
+        try:
+            with Image.open(value) as image:
+                image.verify()
+        except (OSError, ValueError):
+            raise serializers.ValidationError("The uploaded file is not a valid image.")
+        value.seek(0)
         return value
 
     def get_image_url(self, obj):

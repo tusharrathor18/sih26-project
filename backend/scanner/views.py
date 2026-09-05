@@ -1,6 +1,8 @@
 from pathlib import Path
+import logging
 
 from django.db import transaction
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import generics, parsers, status
 from rest_framework.response import Response
@@ -20,6 +22,9 @@ from .services.image_processing import process_image
 from .services.ocr_service import run_ocr
 from .audit import record_audit
 from .models import FieldCorrection
+from .services.report_service import build_inspection_report
+
+logger = logging.getLogger(__name__)
 
 class ScannerStatusView(APIView):
     permission_classes = [IsInspectorOfficer]
@@ -194,6 +199,19 @@ class InspectionAuditView(InspectionAccessMixin, APIView):
     def get(self, request, inspection_id):
         inspection = generics.get_object_or_404(self.get_queryset(), inspection_id=inspection_id)
         return Response([{"action": item.action, "description": item.description, "metadata": item.metadata, "timestamp": item.timestamp} for item in inspection.audit_logs.all()])
+
+
+class InspectionReportView(InspectionAccessMixin, APIView):
+    def get(self, request, inspection_id):
+        inspection = generics.get_object_or_404(self.get_queryset(), inspection_id=inspection_id)
+        try:
+            report = build_inspection_report(inspection)
+        except Exception:
+            logger.exception("Failed to generate inspection report %s", inspection_id)
+            return Response({"message": "The inspection report could not be generated."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        response = HttpResponse(report, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="inspection-{inspection.inspection_id}.pdf"'
+        return response
 
 
 class DashboardStatsView(InspectionAccessMixin, APIView):
