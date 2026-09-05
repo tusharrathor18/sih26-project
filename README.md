@@ -96,13 +96,28 @@ Copy `.env.example` to `.env` inside `backend/`:
 cd backend
 copy .env.example .env
 ```
-Update your MySQL password in `backend/.env`:
+Update your MySQL password and password for users in `backend/.env`:
 ```env
 DB_NAME=legal_metrology
 DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_HOST=127.0.0.1
 DB_PORT=3306
+
+#officer-ids
+
+
+#OFF-ADMIN-001
+#OFF-DEL-2024-001
+#OFF-MUM-2024-042
+#OFF-INACT-2024-099
+
+
+
+OFFICER_01_PASSWORD=any_password
+OFFICER_02_PASSWORD=any_possword
+OFFICER_03_PASSWORD=any_password
+OFFICER_04_PASSWORD=any_password
 ```
 
 ### Step 3: Backend Setup with Virtual Environment
