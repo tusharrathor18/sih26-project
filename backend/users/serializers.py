@@ -1,4 +1,4 @@
-from rest_framework import serializers
+﻿from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import OfficerProfile
 
@@ -33,7 +33,8 @@ class OfficerLoginSerializer(serializers.Serializer):
     Enforces strict business rules:
       - Officer ID must exist in pre-registered records (no public registration).
       - Officer account must be active.
-      - Password must be verified securely.
+      - Password must be verified securely via Django auth.
+      - Safe error messaging to mitigate enumeration vulnerabilities.
     """
     officer_id = serializers.CharField(
         required=True,
@@ -56,7 +57,8 @@ class OfficerLoginSerializer(serializers.Serializer):
             profile = OfficerProfile.objects.select_related('user').get(officer_id=officer_id)
         except OfficerProfile.DoesNotExist:
             raise serializers.ValidationError({
-                'officer_id': 'Officer ID not found. Only pre-authorized officers can access this portal.'
+                'officer_id': 'Officer account not found / invalid credentials.',
+                'non_field_errors': 'Invalid Officer ID or password.'
             })
 
         # 2. Check if officer profile or associated user is active
@@ -65,16 +67,12 @@ class OfficerLoginSerializer(serializers.Serializer):
                 'non_field_errors': 'Officer account is inactive. Please contact the Department Administrator.'
             })
 
-        # 3. Check password
+        # 3. Secure password verification
         user = authenticate(username=profile.user.username, password=password)
         if not user:
-            # Also try checking password directly in case username differs
-            if profile.user.check_password(password):
-                user = profile.user
-            else:
-                raise serializers.ValidationError({
-                    'password': 'Invalid password entered for this Officer ID.'
-                })
+            raise serializers.ValidationError({
+                'non_field_errors': 'Invalid Officer ID or password.'
+            })
 
         attrs['user'] = user
         attrs['profile'] = profile

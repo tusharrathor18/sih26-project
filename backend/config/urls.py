@@ -15,7 +15,8 @@ urlpatterns = [
     # Health check endpoint for system monitoring & verification
     path('api/health/', HealthCheckView.as_view(), name='api-health'),
 
-    # User & officer authentication endpoints
+    # User & officer authentication endpoints (accessible via both /api/auth/ and /api/users/)
+    path('api/auth/', include('users.urls')),
     path('api/users/', include('users.urls')),
 
     # Scanner app placeholders (future prompt expansion)

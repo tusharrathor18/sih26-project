@@ -1,12 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, permissions
+from rest_framework import status
+from users.permissions import IsInspectorOfficer
 
 class ComplianceStatusView(APIView):
     """
     Placeholder endpoint for Legal Metrology compliance rules engine (to be implemented in Prompt 2+).
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsInspectorOfficer]
 
     def get(self, request):
         return Response(

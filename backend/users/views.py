@@ -1,10 +1,11 @@
-from rest_framework.views import APIView
+﻿from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework.authtoken.models import Token
 
 from .models import OfficerProfile
 from .serializers import OfficerLoginSerializer, OfficerProfileSerializer
+from .permissions import IsOfficerActive
 
 class HealthCheckView(APIView):
     """
@@ -42,46 +43,68 @@ class OfficerLoginView(APIView):
 
             # Get or generate DRF authentication token
             token, _ = Token.objects.get_or_create(user=user)
+            officer_data = OfficerProfileSerializer(profile).data
 
             return Response(
                 {
+                    "success": True,
                     "status": "success",
-                    "message": "Officer authentication successful",
+                    "message": "Login successful",
                     "token": token.key,
-                    "officer": OfficerProfileSerializer(profile).data
+                    "user": officer_data,
+                    "officer": officer_data
                 },
                 status=status.HTTP_200_OK
             )
 
+        errors = serializer.errors
+        error_msg = "Invalid Officer ID or password."
+        if 'non_field_errors' in errors:
+            error_msg = str(errors['non_field_errors'][0])
+        elif 'officer_id' in errors and 'password' not in errors:
+            error_msg = "Please enter a valid Officer ID."
+        elif 'password' in errors and 'officer_id' not in errors:
+            error_msg = "Please enter your password."
+
         return Response(
             {
+                "success": False,
                 "status": "error",
-                "message": "Authentication failed",
-                "errors": serializer.errors
+                "message": error_msg,
             },
-            status=status.HTTP_401_UNAUTHORIZED
+            status=(
+                status.HTTP_401_UNAUTHORIZED
+                if 'non_field_errors' in errors
+                else status.HTTP_400_BAD_REQUEST
+            )
         )
 
 class OfficerProfileView(APIView):
     """
     Retrieves the currently authenticated officer's profile information.
-    Protected endpoint: requires valid Token.
+    Protected endpoint: requires valid Token and active status.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsOfficerActive]
 
     def get(self, request):
         try:
             profile = request.user.officer_profile
+            data = OfficerProfileSerializer(profile).data
+            # Response includes user and officer keys as well as root-level fields
             return Response(
                 {
+                    "success": True,
                     "status": "success",
-                    "officer": OfficerProfileSerializer(profile).data
+                    "user": data,
+                    "officer": data,
+                    **data
                 },
                 status=status.HTTP_200_OK
             )
         except OfficerProfile.DoesNotExist:
             return Response(
                 {
+                    "success": False,
                     "status": "error",
                     "message": "No officer profile associated with this user."
                 },
@@ -104,6 +127,7 @@ class OfficerLogoutView(APIView):
 
         return Response(
             {
+                "success": True,
                 "status": "ok",
                 "message": "Officer successfully logged out."
             },

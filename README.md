@@ -142,14 +142,17 @@ npm run dev
 
 ---
 
-## 6. Pre-Authorized Test Officer Accounts (Prompt 1)
+## 6. Pre-Authorized Officer Accounts
 
-| Officer ID | Password | Role | Designation / Jurisdiction |
-| :--- | :--- | :--- | :--- |
-| `OFF-DEL-2024-001` | `Inspector@123` | INSPECTOR | Senior Inspector, Delhi (Zone-1) |
-| `OFF-MUM-2024-042` | `Inspector@123` | INSPECTOR | Inspector, Mumbai (Zone-4) |
-| `OFF-ADMIN-001` | `OfficerAdmin@2024` | ADMIN | Legal Metrology Controller (HQ) |
-| `OFF-INACT-2024-099`| `Inspector@123` | INSPECTOR | *Inactive Account (Access Denied Test)* |
+| Officer ID | Role | Designation / Jurisdiction |
+| :--- | :--- | :--- |
+| `OFF-DEL-2024-001` | INSPECTOR | Senior Inspector, Delhi (Zone-1) |
+| `OFF-MUM-2024-042` | INSPECTOR | Inspector, Mumbai (Zone-4) |
+| `OFF-ADMIN-001` | ADMIN | Legal Metrology Controller (HQ) |
+| `OFF-INACT-2024-099` | INSPECTOR | *Inactive Account (Access Denied Test)* |
+
+Officer accounts are provisioned by department administrators or the development-only
+`seed_officers` management command. There is no public registration or signup flow.
 
 ---
 
@@ -162,16 +165,49 @@ npm run dev
     "message": "Legal Metrology API is running"
   }
   ```
-- **Officer Login:** `POST http://127.0.0.1:8000/api/users/login/`
-  - Body: `{"officer_id": "OFF-DEL-2024-001", "password": "Inspector@123"}`
-- **Officer Profile:** `GET http://127.0.0.1:8000/api/users/me/` (Requires `Authorization: Token <token>`)
+- **Officer Login:** `POST http://127.0.0.1:8000/api/auth/login/`
+  - Body: `{"officer_id": "OFF-DEL-2024-001", "password": "<provisioned-password>"}`
+- **Current Officer:** `GET http://127.0.0.1:8000/api/auth/me/` (Requires `Authorization: Token <token>`)
+- **Logout:** `POST http://127.0.0.1:8000/api/auth/logout/` (Requires `Authorization: Token <token>`)
+
+The login response returns a server-side DRF token and safe officer profile fields only.
+The frontend stores the token for the session and sends it as `Authorization: Token <token>`.
+API errors are mapped to user-friendly messages, and invalid or inactive accounts cannot log in.
+
+### Frontend API Configuration
+
+Copy `frontend/.env.example` to `frontend/.env` and set `VITE_API_BASE_URL` to the Django API
+base URL. Backend configuration remains in `backend/.env`; both `.env` files are ignored by Git.
+
+### Prompt 2 Verification
+
+Run the backend checks from `backend/`:
+
+```powershell
+python manage.py check
+python manage.py test users
+python manage.py seed_officers
+python manage.py runserver
+```
+
+In a separate terminal, run the frontend from `frontend/`:
+
+```powershell
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173/`, sign in with an officer account provisioned in the database,
+verify the dashboard officer details, refresh the page, visit the protected routes, and test
+logout. After logout, `/dashboard`, `/scan`, `/history`, and `/results` redirect to `/login`.
 
 ---
 
 ## 8. Development Roadmap (15 Prompts)
 
-- [x] **Prompt 1/15:** Project Foundation, React + Vite, Django, MySQL, OfficerProfile, Authentication & Dashboard Skeleton.
-- [ ] **Prompt 2/15:** Image Ingestion Pipeline & Camera Capture Module.
+- [x] **Prompt 1/15:** Project Foundation, React + Vite, Django, MySQL, OfficerProfile & Dashboard Skeleton.
+- [x] **Prompt 2/15:** React-Django API integration, officer authentication, protected routes, logout & authorization foundation.
+- [ ] **Prompt 3/15:** Image Ingestion Pipeline & Camera Capture Module.
 - [ ] **Prompt 3/15:** Image Preprocessing (Deskewing, Contrast Adjustment, Bounding Box ROI).
 - [ ] **Prompt 4/15:** OCR Engine Integration (PaddleOCR / Tesseract).
 - [ ] **Prompt 5/15:** Text Parsing & Entity Extraction (MRP, Net Quantity, Dates, Manufacturer).

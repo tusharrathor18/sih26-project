@@ -6,7 +6,12 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [officer, setOfficer] = useState(() => {
     const saved = localStorage.getItem('officer_data');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      localStorage.removeItem('officer_data');
+      return null;
+    }
   });
   const [token, setToken] = useState(() => localStorage.getItem('officer_token'));
   const [isLoading, setIsLoading] = useState(true);
@@ -18,9 +23,10 @@ export const AuthProvider = ({ children }) => {
       if (savedToken) {
         try {
           const data = await authService.getProfile();
-          if (data.status === 'success' && data.officer) {
-            setOfficer(data.officer);
-            localStorage.setItem('officer_data', JSON.stringify(data.officer));
+          const currentOfficer = data.officer || data.user;
+          if (data.status === 'success' && currentOfficer) {
+            setOfficer(currentOfficer);
+            localStorage.setItem('officer_data', JSON.stringify(currentOfficer));
           }
         } catch (err) {
           console.warn('Session expired or invalid token:', err);

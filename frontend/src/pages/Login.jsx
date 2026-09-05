@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ShieldCheck, Lock, AlertCircle, KeyRound, UserCheck, Info } from 'lucide-react';
+import { getApiErrorMessage } from '../services/api';
 import '../styles/login.css';
 
 const Login = () => {
@@ -9,7 +10,6 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showDemoCredentials, setShowDemoCredentials] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -35,33 +35,10 @@ const Login = () => {
       await login(officerId, password);
       navigate(from, { replace: true });
     } catch (err) {
-      // Extract specific backend error messages
-      if (err.response && err.response.data) {
-        const data = err.response.data;
-        if (data.errors) {
-          if (data.errors.officer_id) {
-            setErrorMessage(Array.isArray(data.errors.officer_id) ? data.errors.officer_id[0] : data.errors.officer_id);
-          } else if (data.errors.password) {
-            setErrorMessage(Array.isArray(data.errors.password) ? data.errors.password[0] : data.errors.password);
-          } else if (data.errors.non_field_errors) {
-            setErrorMessage(Array.isArray(data.errors.non_field_errors) ? data.errors.non_field_errors[0] : data.errors.non_field_errors);
-          } else {
-            setErrorMessage(data.message || 'Authentication failed. Please check credentials.');
-          }
-        } else {
-          setErrorMessage(data.message || 'Access denied. Please verify your Officer ID and password.');
-        }
-      } else {
-        setErrorMessage('Unable to connect to backend service. Ensure Django server is running.');
-      }
+      setErrorMessage(err.response?.data?.message || getApiErrorMessage(err, 'Invalid Officer ID or password.'));
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const fillTestCredentials = (id, pwd) => {
-    setOfficerId(id);
-    setPassword(pwd);
   };
 
   return (
@@ -160,40 +137,6 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Quick Credential Guide for Testing / Prompt 1 Evaluation */}
-          <div className="demo-credentials-toggle">
-            <button
-              type="button"
-              onClick={() => setShowDemoCredentials(!showDemoCredentials)}
-              className="btn-toggle-demo"
-            >
-              {showDemoCredentials ? '▲ Hide Test Credentials' : '▼ Pre-authorized Test Accounts (Prompt 1)'}
-            </button>
-
-            {showDemoCredentials && (
-              <div className="demo-credentials-box">
-                <div className="demo-row" onClick={() => fillTestCredentials('OFF-DEL-2024-001', 'Inspector@123')}>
-                  <div>
-                    <strong>OFF-DEL-2024-001</strong> (Inspector Delhi)
-                  </div>
-                  <span className="fill-pill">Click to fill</span>
-                </div>
-                <div className="demo-row" onClick={() => fillTestCredentials('OFF-MUM-2024-042', 'Inspector@123')}>
-                  <div>
-                    <strong>OFF-MUM-2024-042</strong> (Inspector Mumbai)
-                  </div>
-                  <span className="fill-pill">Click to fill</span>
-                </div>
-                <div className="demo-row" onClick={() => fillTestCredentials('OFF-INACT-2024-099', 'Inspector@123')}>
-                  <div>
-                    <strong>OFF-INACT-2024-099</strong> (Inactive Test)
-                  </div>
-                  <span className="fill-pill text-warn">Test Inactive</span>
-                </div>
-                <div className="demo-subnote">Password for all test officers: <code>Inspector@123</code></div>
-              </div>
-            )}
-          </div>
         </div>
 
         {/* Footer info */}

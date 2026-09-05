@@ -5,7 +5,7 @@ export const authService = {
    * Authenticate officer via Officer ID and password
    */
   async login(officer_id, password) {
-    const response = await api.post('/users/login/', {
+    const response = await api.post('/auth/login/', {
       officer_id: officer_id.trim(),
       password: password,
     });
@@ -16,7 +16,7 @@ export const authService = {
    * Fetch current authenticated officer's profile
    */
   async getProfile() {
-    const response = await api.get('/users/me/');
+    const response = await api.get('/auth/me/');
     return response.data;
   },
 
@@ -25,7 +25,7 @@ export const authService = {
    */
   async logout() {
     try {
-      await api.post('/users/logout/');
+      await api.post('/auth/logout/');
     } catch (e) {
       console.warn('Backend logout encountered error, clearing client credentials locally:', e);
     } finally {
