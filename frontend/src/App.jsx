@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Scan from './pages/Scan';
 import History from './pages/History';
 import Results from './pages/Results';
+import InspectionReview from './pages/InspectionReview';
 
 import './styles/index.css';
 
@@ -49,6 +50,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Results />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/scan/:inspectionId/review"
+            element={
+              <ProtectedRoute>
+                <InspectionReview />
               </ProtectedRoute>
             }
           />

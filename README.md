@@ -201,13 +201,59 @@ Open `http://localhost:5173/`, sign in with an officer account provisioned in th
 verify the dashboard officer details, refresh the page, visit the protected routes, and test
 logout. After logout, `/dashboard`, `/scan`, `/history`, and `/results` redirect to `/login`.
 
+## 8. Prompt 3 Product Inspection Pipeline
+
+The authenticated scanner workflow is now available at `/scan`:
+
+1. Create an inspection and optionally label the product.
+2. Select multiple JPEG, PNG, or WEBP package images, or capture them with a supported camera.
+3. Assign each image a package side, preview it, and remove unsuitable images.
+4. Upload originals to Django media storage, preprocess a copy, and run the OCR service.
+5. Review detected text and structured fields at `/scan/<inspection_id>/review`.
+6. Correct or verify fields. Original OCR values remain stored for auditability.
+
+Inspection APIs are authenticated and owner-scoped:
+
+```text
+POST   /api/scanner/inspections/
+GET    /api/scanner/inspections/
+GET    /api/scanner/inspections/<inspection_id>/
+POST   /api/scanner/inspections/<inspection_id>/images/
+DELETE /api/scanner/inspections/<inspection_id>/images/<image_id>/
+POST   /api/scanner/inspections/<inspection_id>/process/
+PATCH  /api/scanner/inspections/<inspection_id>/verify/
+```
+
+The processing layer stores original images, processed copies, OCR regions, confidence,
+and structured extraction metadata. It does not evaluate legal compliance or produce
+PASS/FAIL decisions; that belongs to Prompt 4. Extraction is assistive and requires
+officer verification.
+
+### OCR Runtime
+
+Pillow is required for Django image validation. OpenCV is used when installed for
+denoising and enhancement. PaddleOCR is loaded lazily by the processing service so the
+API can report a clear processing failure when its platform-compatible PaddlePaddle
+runtime is not installed. Python 3.13 support for PaddlePaddle must be verified before
+installing it on Windows; use a supported Python environment and then install the
+versions listed in `backend/requirements.txt`.
+
+After changing models or dependencies:
+
+```powershell
+cd backend
+python manage.py makemigrations
+python manage.py migrate
+python manage.py test scanner.tests users.tests
+```
+
 ---
 
 ## 8. Development Roadmap (15 Prompts)
 
 - [x] **Prompt 1/15:** Project Foundation, React + Vite, Django, MySQL, OfficerProfile & Dashboard Skeleton.
 - [x] **Prompt 2/15:** React-Django API integration, officer authentication, protected routes, logout & authorization foundation.
-- [ ] **Prompt 3/15:** Image Ingestion Pipeline & Camera Capture Module.
+- [x] **Prompt 3/15:** Multi-image inspection ingestion, preprocessing, OCR storage, structured extraction & officer verification.
 - [ ] **Prompt 3/15:** Image Preprocessing (Deskewing, Contrast Adjustment, Bounding Box ROI).
 - [ ] **Prompt 4/15:** OCR Engine Integration (PaddleOCR / Tesseract).
 - [ ] **Prompt 5/15:** Text Parsing & Entity Extraction (MRP, Net Quantity, Dates, Manufacturer).

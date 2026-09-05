@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
@@ -16,88 +16,58 @@ import {
   Clock
 } from 'lucide-react';
 import '../styles/dashboard.css';
+import { scannerService } from '../services/scannerService';
 
 const Dashboard = () => {
   const { officer } = useAuth();
   const navigate = useNavigate();
+  const [inspections, setInspections] = useState([]);
 
-  // Placeholder inspection metrics for Prompt 1
+  useEffect(() => {
+    scannerService.listInspections().then(setInspections).catch(() => setInspections([]));
+  }, []);
+
   const stats = [
     {
       title: 'Total Inspections',
-      value: '24',
-      subtitle: 'Recorded across jurisdiction',
+      value: String(inspections.length),
+      subtitle: 'Recorded under your account',
       icon: FileText,
       badgeColor: '#38bdf8',
       iconBg: 'rgba(56, 189, 248, 0.12)',
     },
     {
-      title: 'Passed (Compliant)',
-      value: '18',
-      subtitle: '75% compliance rate',
+      title: 'Ready for Compliance',
+      value: String(inspections.filter((item) => item.status === 'READY_FOR_COMPLIANCE').length),
+      subtitle: 'Verified extraction records',
       icon: CheckCircle2,
       badgeColor: '#10b981',
       iconBg: 'rgba(16, 185, 129, 0.12)',
     },
     {
-      title: 'Failed (Violations)',
-      value: '4',
-      subtitle: 'Notices generated',
+      title: 'Awaiting Verification',
+      value: String(inspections.filter((item) => item.status === 'AWAITING_VERIFICATION').length),
+      subtitle: 'Officer review required',
       icon: XCircle,
       badgeColor: '#f43f5e',
       iconBg: 'rgba(244, 63, 94, 0.12)',
     },
     {
       title: 'Needs Review',
-      value: '2',
-      subtitle: 'Ambiguous packaging labels',
+      value: String(inspections.filter((item) => ['PROCESSING', 'FAILED'].includes(item.status)).length),
+      subtitle: 'Processing or needs retry',
       icon: AlertTriangle,
       badgeColor: '#f59e0b',
       iconBg: 'rgba(245, 158, 11, 0.12)',
     },
   ];
 
-  // Sample recent inspections skeleton
-  const recentInspections = [
-    {
-      id: 'INSP-2024-0104',
-      product: 'Fortified Sunflower Oil 1L',
-      brand: 'SunPure FMCG Ltd.',
-      mrp: '₹185.00',
-      status: 'PASSED',
-      date: 'Today, 14:32',
-      declarations: '7/7 Rules Verified',
-    },
-    {
-      id: 'INSP-2024-0103',
-      product: 'Wheat Flour / Atta 5kg',
-      brand: 'Kisan Golden Harvest',
-      mrp: '₹240.00',
-      status: 'NEEDS_REVIEW',
-      date: 'Yesterday, 17:15',
-      declarations: 'Consumer care contact unreadable',
-    },
-    {
-      id: 'INSP-2024-0102',
-      product: 'Almond Kernels 250g Jar',
-      brand: 'NutriDelight Imports',
-      mrp: '₹450.00',
-      status: 'FAILED',
-      date: 'Yesterday, 11:20',
-      declarations: 'Missing Country of Origin (Rule 6)',
-    },
-  ];
+  const recentInspections = inspections.slice(0, 5);
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case 'PASSED':
-        return <span className="badge-status badge-pass"><CheckCircle2 size={13} /> Compliant</span>;
-      case 'FAILED':
-        return <span className="badge-status badge-fail"><XCircle size={13} /> Violation Found</span>;
-      case 'NEEDS_REVIEW':
-        return <span className="badge-status badge-review"><AlertTriangle size={13} /> Needs Review</span>;
       default:
-        return <span className="badge-status">{status}</span>;
+        return <span className="badge-status badge-review"><AlertTriangle size={13} /> {status.replaceAll('_', ' ')}</span>;
     }
   };
 
@@ -180,31 +150,27 @@ const Dashboard = () => {
             <table className="inspections-table">
               <thead>
                 <tr>
-                  <th>Session ID</th>
-                  <th>Commodity / Product</th>
-                  <th>Brand / Manufacturer</th>
-                  <th>Declared MRP</th>
-                  <th>Compliance Status</th>
+                  <th>Inspection ID</th>
+                  <th>Product</th>
+                  <th>Images</th>
+                  <th>Status</th>
                   <th>Inspection Date</th>
-                  <th>Audit Findings</th>
+                  <th>Next step</th>
                 </tr>
               </thead>
               <tbody>
                 {recentInspections.map((row) => (
                   <tr key={row.id}>
-                    <td>
-                      <span className="font-mono text-cyan">{row.id}</span>
-                    </td>
-                    <td className="font-medium text-white">{row.product}</td>
-                    <td className="text-slate">{row.brand}</td>
-                    <td className="font-medium text-white">{row.mrp}</td>
+                    <td><span className="font-mono text-cyan">{row.inspection_id}</span></td>
+                    <td className="font-medium text-white">{row.product_name || 'Unlabelled package'}</td>
+                    <td className="text-slate">{row.image_count}</td>
                     <td>{getStatusBadge(row.status)}</td>
                     <td className="text-slate">
                       <div className="time-cell">
-                        <Clock size={13} /> {row.date}
+                        <Clock size={13} /> {new Date(row.created_at).toLocaleString()}
                       </div>
                     </td>
-                    <td className="text-sm text-slate">{row.declarations}</td>
+                    <td><button className="btn-secondary" onClick={() => navigate(`/scan/${row.inspection_id}/review`)}>Review extraction</button></td>
                   </tr>
                 ))}
               </tbody>

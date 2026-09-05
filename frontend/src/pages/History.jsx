@@ -1,10 +1,22 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { History as HistoryIcon, ArrowLeft, Search, Filter, ShieldCheck } from 'lucide-react';
+import { History as HistoryIcon, ArrowLeft, Search, ShieldCheck, ExternalLink } from 'lucide-react';
+import { getApiErrorMessage } from '../services/api';
+import { scannerService } from '../services/scannerService';
+import '../styles/scanner.css';
 
 const History = () => {
   const navigate = useNavigate();
+  const [inspections, setInspections] = useState([]);
+  const [query, setQuery] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    scannerService.listInspections().then(setInspections).catch((requestError) => setError(getApiErrorMessage(requestError, 'Unable to load inspection history.')));
+  }, []);
+
+  const filtered = inspections.filter((inspection) => inspection.inspection_id.toLowerCase().includes(query.toLowerCase()) || inspection.product_name.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="portal-layout">
@@ -17,12 +29,7 @@ const History = () => {
           </button>
         </div>
 
-        <div style={{
-          backgroundColor: '#1e293b',
-          border: '1px solid #334155',
-          borderRadius: '12px',
-          padding: '32px',
-        }}>
+        <div className="scanner-panel">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -49,33 +56,17 @@ const History = () => {
                 <Search size={16} color="#64748b" />
                 <input
                   type="text"
-                  placeholder="Filter by Session ID or Brand..."
+                  placeholder="Search inspection ID or product..."
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
                   style={{ background: 'transparent', border: 'none', color: '#f8fafc', outline: 'none', fontSize: '13px' }}
-                  disabled
                 />
-              </div>
-              <button className="btn-secondary" disabled style={{ opacity: 0.6 }}>
-                <Filter size={14} /> Filter
-              </button>
+                </div>
             </div>
           </div>
-
-          <div style={{
-            padding: '48px 24px',
-            textAlign: 'center',
-            backgroundColor: '#0f172a',
-            borderRadius: '8px',
-            border: '1px dashed #334155'
-          }}>
-            <ShieldCheck size={36} color="#38bdf8" style={{ margin: '0 auto 12px' }} />
-            <h3 style={{ color: '#f8fafc', fontSize: '16px', marginBottom: '6px' }}>Historical Audits Module Scaffolded</h3>
-            <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '500px', margin: '0 auto 20px' }}>
-              Historical inspection records with exportable PDF audit sheets will connect to the database in subsequent prompts.
-            </p>
-            <button onClick={() => navigate('/dashboard')} className="btn-secondary">
-              Return to Dashboard
-            </button>
-          </div>
+            {error && <div className="scanner-alert">{error}</div>}
+            {!error && !filtered.length && <div style={{ padding: '48px 24px', textAlign: 'center', color: '#94a3b8' }}><ShieldCheck size={36} color="#38bdf8" style={{ margin: '0 auto 12px' }} /><p>No inspections found.</p></div>}
+            {filtered.length > 0 && <div className="table-wrapper"><table className="inspections-table"><thead><tr><th>Inspection ID</th><th>Product</th><th>Date</th><th>Images</th><th>Status</th><th /></tr></thead><tbody>{filtered.map((inspection) => <tr key={inspection.inspection_id}><td className="font-mono text-cyan">{inspection.inspection_id}</td><td className="font-medium text-white">{inspection.product_name || 'Unlabelled package'}</td><td className="text-slate">{new Date(inspection.created_at).toLocaleString()}</td><td className="text-slate">{inspection.image_count}</td><td><span className="badge-status badge-review">{inspection.status.replaceAll('_', ' ')}</span></td><td><button className="btn-secondary" onClick={() => navigate(`/scan/${inspection.inspection_id}/review`)}><ExternalLink size={14} /> Review</button></td></tr>)}</tbody></table></div>}
         </div>
       </main>
     </div>
