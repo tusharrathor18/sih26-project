@@ -17,16 +17,24 @@ import {
 } from 'lucide-react';
 import '../styles/dashboard.css';
 import { scannerService } from '../services/scannerService';
+import { getApiErrorMessage } from '../services/api';
 
 const Dashboard = () => {
   const { officer } = useAuth();
   const navigate = useNavigate();
   const [inspections, setInspections] = useState([]);
   const [dashboardStats, setDashboardStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    scannerService.listInspections().then(setInspections).catch(() => setInspections([]));
-    scannerService.getStats().then(setDashboardStats).catch(() => setDashboardStats(null));
+    Promise.all([scannerService.listInspections(), scannerService.getStats()])
+      .then(([history, stats]) => {
+        setInspections(history.results || []);
+        setDashboardStats(stats);
+      })
+      .catch((requestError) => setError(getApiErrorMessage(requestError, 'Unable to load dashboard data.')))
+      .finally(() => setLoading(false));
   }, []);
 
   const stats = [
@@ -68,6 +76,17 @@ const Dashboard = () => {
 
   const getStatusBadge = (status) => {
     switch (status) {
+      case 'COMPLIANT':
+        return <span className="badge-status badge-pass"><CheckCircle2 size={13} /> Compliant</span>;
+      case 'NON_COMPLIANT':
+      case 'FAILED':
+        return <span className="badge-status badge-fail"><XCircle size={13} /> {status.replaceAll('_', ' ')}</span>;
+      case 'PROCESSING':
+        return <span className="badge-status badge-review"><Clock size={13} /> Processing</span>;
+      case 'VERIFIED':
+      case 'AWAITING_VERIFICATION':
+      case 'READY_FOR_COMPLIANCE':
+        return <span className="badge-status badge-review"><AlertTriangle size={13} /> {status.replaceAll('_', ' ')}</span>;
       default:
         return <span className="badge-status badge-review"><AlertTriangle size={13} /> {status.replaceAll('_', ' ')}</span>;
     }
@@ -115,6 +134,8 @@ const Dashboard = () => {
             </button>
           </div>
         </section>
+        {error && <div className="scanner-alert" role="alert">{error}</div>}
+        {loading && <div className="scanner-alert" role="status">Loading dashboard data...</div>}
 
         {/* Statistics Cards Grid */}
         <section className="stats-grid">
@@ -148,6 +169,7 @@ const Dashboard = () => {
             </button>
           </div>
 
+          {!loading && !error && !recentInspections.length && <div className="scanner-alert" role="status">No inspections found.</div>}
           <div className="table-wrapper">
             <table className="inspections-table">
               <thead>

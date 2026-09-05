@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, LayoutDashboard, Camera, History, FileCheck2, LogOut, UserCheck } from 'lucide-react';
+import { ShieldCheck, LayoutDashboard, Camera, History, LogOut, UserCheck } from 'lucide-react';
 
 const Navbar = () => {
   const { officer, logout } = useAuth();
@@ -17,7 +17,6 @@ const Navbar = () => {
     { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/scan', label: 'Scan Commodity', icon: Camera },
     { path: '/history', label: 'Audit History', icon: History },
-    { path: '/results', label: 'Compliance Reports', icon: FileCheck2 },
   ];
 
   return (

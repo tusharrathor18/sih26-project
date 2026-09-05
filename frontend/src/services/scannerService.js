@@ -3,7 +3,10 @@ import api from './api';
 export const scannerService = {
   async listInspections(params = {}) {
     const response = await api.get('/scanner/inspections/history/', { params });
-    return response.data.results || response.data;
+    if (Array.isArray(response.data)) {
+      return { results: response.data, next: null, previous: null };
+    }
+    return response.data;
   },
 
   async createInspection(productName = '') {

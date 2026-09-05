@@ -11,10 +11,41 @@ const History = () => {
   const [inspections, setInspections] = useState([]);
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
+  const [nextPage, setNextPage] = useState(null);
+  const [previousPage, setPreviousPage] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    scannerService.listInspections({ search: query }).then(setInspections).catch((requestError) => setError(getApiErrorMessage(requestError, 'Unable to load inspection history.')));
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      scannerService.listInspections({ search: query, page: 1 })
+        .then((data) => {
+          setInspections(data.results || []);
+          setNextPage(data.next);
+          setPreviousPage(data.previous);
+          setError('');
+        })
+        .catch((requestError) => setError(getApiErrorMessage(requestError, 'Unable to load inspection history.')))
+        .finally(() => setLoading(false));
+    }, 250);
+    return () => window.clearTimeout(timer);
   }, [query]);
+
+  const changePage = async (url) => {
+    if (!url) return;
+    const requestUrl = new URL(url, window.location.origin);
+    setLoading(true);
+    try {
+      const data = await scannerService.listInspections({ page: requestUrl.searchParams.get('page') || 1, search: query });
+      setInspections(data.results || []);
+      setNextPage(data.next);
+      setPreviousPage(data.previous);
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, 'Unable to load inspection history.'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = inspections;
 
@@ -64,9 +95,11 @@ const History = () => {
                 </div>
             </div>
           </div>
-            {error && <div className="scanner-alert">{error}</div>}
-            {!error && !filtered.length && <div style={{ padding: '48px 24px', textAlign: 'center', color: '#5b6573' }}><ShieldCheck size={36} color="#356a9a" style={{ margin: '0 auto 12px' }} /><p>No inspections found.</p></div>}
+            {error && <div className="scanner-alert" role="alert">{error}</div>}
+            {loading && <div className="scanner-alert" role="status">Loading inspection history...</div>}
+            {!loading && !error && !filtered.length && <div style={{ padding: '48px 24px', textAlign: 'center', color: '#5b6573' }}><ShieldCheck size={36} color="#356a9a" style={{ margin: '0 auto 12px' }} /><p>No inspections match your filters.</p></div>}
             {filtered.length > 0 && <div className="table-wrapper"><table className="inspections-table"><thead><tr><th>Inspection ID</th><th>Product</th><th>Date</th><th>Images</th><th>Status</th><th /></tr></thead><tbody>{filtered.map((inspection) => <tr key={inspection.inspection_id}><td className="font-mono text-cyan">{inspection.inspection_id}</td><td className="font-medium text-white">{inspection.product_name || 'Unlabelled package'}</td><td className="text-slate">{new Date(inspection.created_at).toLocaleString()}</td><td className="text-slate">{inspection.image_count}</td><td><span className="badge-status badge-review">{inspection.status.replaceAll('_', ' ')}</span></td><td><button className="btn-secondary" onClick={() => navigate(`/inspection/${inspection.inspection_id}`)}><ExternalLink size={14} /> Review</button></td></tr>)}</tbody></table></div>}
+            {(nextPage || previousPage) && <div className="scanner-actions" style={{ justifyContent: 'space-between', marginTop: 16 }}><button className="btn-secondary" disabled={!previousPage || loading} onClick={() => changePage(previousPage)}>Previous</button><span aria-live="polite">Page results</span><button className="btn-secondary" disabled={!nextPage || loading} onClick={() => changePage(nextPage)}>Next</button></div>}
         </div>
       </main>
     </div>

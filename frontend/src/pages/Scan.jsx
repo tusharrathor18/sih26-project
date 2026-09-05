@@ -15,6 +15,7 @@ const Scan = () => {
   const fileInputRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
+  const selectedImagesRef = useRef([]);
   const [productName, setProductName] = useState('');
   const [selectedImages, setSelectedImages] = useState([]);
   const [error, setError] = useState('');
@@ -22,7 +23,14 @@ const Scan = () => {
   const [cameraError, setCameraError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => () => streamRef.current?.getTracks().forEach((track) => track.stop()), []);
+  useEffect(() => {
+    selectedImagesRef.current = selectedImages;
+  }, [selectedImages]);
+
+  useEffect(() => () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    selectedImagesRef.current.forEach((item) => URL.revokeObjectURL(item.preview));
+  }, []);
 
   const addFiles = (files) => {
     const next = [];

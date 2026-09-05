@@ -46,20 +46,16 @@ function App() {
             }
           />
           <Route
-            path="/results"
-            element={
-              <ProtectedRoute>
-                <Results />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="/scan/:inspectionId/review"
             element={
               <ProtectedRoute>
                 <InspectionReview />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/inspection/:inspectionId/review"
+            element={<ProtectedRoute><InspectionReview /></ProtectedRoute>}
           />
           <Route
             path="/inspection/:inspectionId"

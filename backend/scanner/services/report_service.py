@@ -91,18 +91,19 @@ def build_inspection_report(inspection):
     values = (extracted.values if extracted else {}) or {}
     metadata = (extracted.field_metadata if extracted else {}) or {}
     fields = [
-        ("Product name", inspection.product_name), ("Common/generic name", values.get("common_name")),
-        ("Manufacturer", values.get("manufacturer")), ("Manufacturer address", values.get("manufacturer_address")),
-        ("Packer", values.get("packer")), ("Packer address", values.get("packer_address")),
-        ("Importer", values.get("importer")), ("Importer address", values.get("importer_address")),
+        ("Product name", inspection.product_name or values.get("product_name")), ("Common/generic name", values.get("common_or_generic_name")),
+        ("Manufacturer", values.get("manufacturer_name")), ("Manufacturer address", values.get("manufacturer_address")),
+        ("Packer", values.get("packer_name")), ("Packer address", values.get("packer_address")),
+        ("Importer", values.get("importer_name")), ("Importer address", values.get("importer_address")),
         ("Country of origin", values.get("country_of_origin")), ("Net quantity", values.get("net_quantity")),
         ("Quantity unit", values.get("quantity_unit") or inspection.quantity_unit), ("MRP / retail sale price", values.get("mrp")),
-        ("Manufacturing/packing date", values.get("date_of_manufacture")), ("Best before/use by", values.get("best_before")),
-        ("Consumer care/contact", values.get("consumer_care")), ("Unit sale price", values.get("unit_sale_price")),
+        ("Manufacturing/packing date", values.get("manufacturing_date") or values.get("packing_date")), ("Best before/use by", values.get("best_before") or values.get("use_by")),
+        ("Consumer care/contact", values.get("consumer_care_name") or values.get("consumer_care_phone") or values.get("consumer_care_email")), ("Unit sale price", values.get("unit_sale_price")),
         ("Dimensions", values.get("dimensions")), ("Batch/lot number", values.get("batch_number")),
     ]
     for label, value in fields:
-        field_status = metadata.get(label.lower().replace(" ", "_"), {}).get("status", getattr(extracted, "verification_status", "NOT_DETECTED")) if extracted else "NOT_DETECTED"
+        metadata_key = {"Product name": "product_name", "Common/generic name": "common_or_generic_name", "Manufacturer": "manufacturer_name", "Packer": "packer_name", "Importer": "importer_name", "Manufacturing/packing date": "manufacturing_date", "Consumer care/contact": "consumer_care_name"}.get(label, label.lower().replace(" ", "_"))
+        field_status = metadata.get(metadata_key, {}).get("status", getattr(extracted, "verification_status", "NOT_DETECTED")) if extracted else "NOT_DETECTED"
         package_rows.append([_paragraph(label, cell), _paragraph(value, cell), _paragraph(field_status, cell)])
     story.append(_table(package_rows, [48 * mm, 85 * mm, 37 * mm], [("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#dceaf4")), ("GRID", (0, 0), (-1, -1), 0.35, colors.grey), ("VALIGN", (0, 0), (-1, -1), "TOP"), ("PADDING", (0, 0), (-1, -1), 4)]))
 

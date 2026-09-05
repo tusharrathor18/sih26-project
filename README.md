@@ -199,7 +199,8 @@ npm run dev
 
 Open `http://localhost:5173/`, sign in with an officer account provisioned in the database,
 verify the dashboard officer details, refresh the page, visit the protected routes, and test
-logout. After logout, `/dashboard`, `/scan`, `/history`, and `/results` redirect to `/login`.
+logout. After logout, `/dashboard`, `/scan`, `/history`, and inspection-specific review/results
+routes redirect to `/login`.
 
 ## 8. Prompt 3 Product Inspection Pipeline
 
