@@ -168,6 +168,17 @@ Run the seed command from `backend/`:
 python manage.py seed_officers
 ```
 
+If an existing database was seeded before changing the private environment values, run the
+explicit reset operation once:
+
+```powershell
+python manage.py seed_officers --reset-passwords
+```
+
+Normal seeding never changes existing passwords. The login form expects the **Officer ID**,
+not the Django username. The currently active IDs are `OFF-ADMIN-001`, `OFF-DEL-2024-001`,
+and `OFF-MUM-2024-042`; `OFF-INACT-2024-099` is intentionally disabled.
+
 The command fails if a required variable is missing, never uses a fallback password, hashes
 new passwords with Django `set_password()`, and does not reset passwords for existing users
 when rerun. Confirm a stored password is hashed without displaying its value:

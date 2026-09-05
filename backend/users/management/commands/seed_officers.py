@@ -74,7 +74,15 @@ class Command(BaseCommand):
         },
     ]
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--reset-passwords",
+            action="store_true",
+            help="Explicitly reset existing officer passwords from their environment variables.",
+        )
+
     def handle(self, *args, **options):
+        reset_passwords = options["reset_passwords"]
         missing = [
             item["password_env"]
             for item in self.officers_data
@@ -98,7 +106,7 @@ class Command(BaseCommand):
                         "is_active": item["is_active"],
                     },
                 )
-                if created:
+                if created or reset_passwords:
                     user.set_password(os.environ[item["password_env"]])
                 user.email = item["email"]
                 user.is_staff = item["is_staff"]
@@ -125,7 +133,10 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.SUCCESS(f"Officer {item['officer_id']} created successfully."))
                 else:
                     existing_count += 1
-                    self.stdout.write(f"Officer {item['officer_id']} already exists; password unchanged.")
+                    if reset_passwords:
+                        self.stdout.write(f"Officer {item['officer_id']} password reset successfully.")
+                    else:
+                        self.stdout.write(f"Officer {item['officer_id']} already exists; password unchanged.")
 
         self.stdout.write(self.style.SUCCESS(
             f"Finished seeding officers. Created: {created_count}, Existing: {existing_count}."
