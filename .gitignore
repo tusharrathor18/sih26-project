@@ -12,8 +12,15 @@ __pycache__/
 
 # Environment variables
 .env
+*.env
 .env.local
 .env.*.local
+
+# Database exports may contain sensitive application data.
+*.sql
+*.sql.gz
+*.dump
+database-dumps/
 
 # Node / Frontend
 node_modules/

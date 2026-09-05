@@ -88,7 +88,8 @@ def evaluate_inspection(inspection):
             outputs.append(_standard_pack_result(rule, inspection, values))
         elif rule.rule_number == "6":
             results = [_field_result(rule, values, metadata, field, label) for field, label in FIELD_RULES.items()]
-            outputs.append(_result(rule, "PASS" if all(item["status"] == "PASS" for item in results) else "MANUAL_REVIEW", "; ".join(item["detected_value"] for item in results), "All applicable Rule 6 declarations", "Individual declaration checks are preserved in evidence.", "Verify missing or low-confidence declarations.", {"declarations": results}))
+            declarations = [{key: value for key, value in item.items() if key != "rule"} for item in results]
+            outputs.append(_result(rule, "PASS" if all(item["status"] == "PASS" for item in results) else "MANUAL_REVIEW", "; ".join(item["detected_value"] for item in results), "All applicable Rule 6 declarations", "Individual declaration checks are preserved in evidence.", "Verify missing or low-confidence declarations.", {"declarations": declarations}))
         elif rule.rule_number == "10":
             outputs.append(_field_result(rule, values, metadata, "manufacturer_name", "Manufacturer/packer/importer information"))
         elif rule.rule_number == "11":

@@ -1,6 +1,9 @@
 from io import BytesIO
+import os
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from PIL import Image
@@ -147,3 +150,18 @@ class InspectionReportApiTests(TestCase):
         response = self.client.get(f"/api/scanner/inspections/{inspection.inspection_id}/report/pdf/")
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.content.startswith(b"%PDF"))
+
+
+class DemoDataSeedTests(TestCase):
+    def test_demo_seed_is_reproducible_and_idempotent(self):
+        passwords = {f"OFFICER_{index:02d}_PASSWORD": f"demo-local-password-{index}" for index in range(1, 5)}
+        with patch.dict(os.environ, passwords, clear=False):
+            call_command("seed_demo_data", verbosity=0)
+            first_count = Inspection.objects.filter(inspection_id__startswith="DEMO-").count()
+            first_evaluation_count = ComplianceEvaluation.objects.filter(inspection__inspection_id__startswith="DEMO-").count()
+            call_command("seed_demo_data", verbosity=0)
+
+        self.assertEqual(first_count, 2)
+        self.assertEqual(Inspection.objects.filter(inspection_id__startswith="DEMO-").count(), first_count)
+        self.assertEqual(ComplianceEvaluation.objects.filter(inspection__inspection_id__startswith="DEMO-").count(), first_evaluation_count)
+        self.assertTrue(User.objects.get(username="admin_officer").check_password(passwords["OFFICER_01_PASSWORD"]))

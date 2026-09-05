@@ -401,3 +401,79 @@ Automated results are preliminary decision-support output. Officers must perform
 measurements and other manual checks identified in the report. Known limitations include
 synchronous OCR/image processing, source-image references instead of full-resolution PDF
 embeds, and no production backup or deployment pipeline in Prompt 6.
+
+## Setup for Another Developer
+
+This repository is designed to recreate a local copy with Django migrations and safe seed
+commands. It does not provide access to the original MySQL database and does not require a
+database dump.
+
+### 1. Clone and create a local MySQL database
+
+```sql
+CREATE DATABASE sih26 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### 2. Configure private environment values
+
+Copy `.env.example` to `backend/.env` and set only local values:
+
+```powershell
+cd backend
+copy ..\.env.example .env
+```
+
+Set `DB_NAME=sih26`, your local MySQL username/password, a new local `SECRET_KEY`, and the
+four officer password variables used by the four officer records currently defined in this
+repository. The remaining six `OFFICER_*` placeholders are reserved for future officer
+records. Never commit `backend/.env`.
+
+### 3. Install, migrate, and seed
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py seed_demo_data
+```
+
+`seed_demo_data` calls the existing `seed_officers` command and seeds legal rules only when
+the local database has no rules, then creates
+two clearly marked demo inspections, extracted data, compliance evaluations, and audit
+events. It is idempotent: existing demo records and existing officer passwords are not
+overwritten. If synchronizing an already-created local officer account with new private
+password variables is explicitly required, use:
+
+```powershell
+python manage.py seed_officers --reset-passwords
+```
+
+The demo inspections contain no uploaded image files; they exercise the dashboard, review,
+compliance, history, audit, and PDF report paths without copying personal evidence.
+
+### 4. Start the applications
+
+```powershell
+python manage.py runserver
+```
+
+In a second terminal:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+The Vite development proxy sends `/api` requests to `http://127.0.0.1:8000`. To use another
+backend URL, create `frontend/.env` from `frontend/.env.example` and set `VITE_API_BASE_URL`.
+
+### Database reproduction decision
+
+Do not commit a MySQL dump for this project. Migrations are the schema source of truth, and
+the seed commands reproduce non-sensitive rules, officer metadata, demo inspections,
+extracted values, compliance evaluations, and audit events. A raw dump would be easier to
+accidentally ship with personal data, password hashes, tokens, or environment-specific
+database state. If a dump is ever generated for private debugging, keep it outside Git and
+do not import it before migrations without explicitly matching its migration state.
